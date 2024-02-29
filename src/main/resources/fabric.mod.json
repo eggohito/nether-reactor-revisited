@@ -1,41 +1,38 @@
 {
 	"schemaVersion": 1,
-	"id": "modid",
+	"id": "nether-reactor-revisited",
 	"version": "${version}",
-	"name": "Example mod",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"name": "Nether Reactor: Revisited",
+	"description": "A Fabric mod that re-adds the Nether Reactor Cores from Minecraft: Pocket Edition",
 	"authors": [
-		"Me!"
+		"eggohito",
+		"Foony"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"sources": "https://github.com/eggohito/nether-reactor-revisited"
 	},
 	"license": "CC0-1.0",
-	"icon": "assets/modid/icon.png",
+	"icon": "assets/nether-reactor-revisited/icon.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"com.example.ExampleMod"
+			"io.github.eggohito.nether_reactor_revisited.NetherReactorRevisited"
 		],
 		"client": [
-			"com.example.ExampleModClient"
+			"io.github.eggohito.nether_reactor_revisited.NetherReactorRevisitedClient"
 		]
 	},
 	"mixins": [
-		"modid.mixins.json",
+        "nether-reactor-revisited.mixins.json",
 		{
-			"config": "modid.client.mixins.json",
+			"config": "nether-reactor-revisited.client.mixins.json",
 			"environment": "client"
 		}
 	],
 	"depends": {
-		"fabricloader": ">=0.15.0",
-		"minecraft": "~1.20.4",
+		"fabricloader": ">=0.15.7",
+		"minecraft": "1.20.4",
 		"java": ">=17",
-		"fabric-api": "*"
-	},
-	"suggests": {
-		"another-mod": "*"
+		"fabric-api": ">=0.96.4"
 	}
 }
