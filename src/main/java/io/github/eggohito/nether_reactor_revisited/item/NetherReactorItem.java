@@ -10,6 +10,7 @@ import net.fabricmc.fabric.api.util.TriState;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.item.TooltipContext;
+import net.minecraft.enchantment.Enchantments;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -66,21 +67,22 @@ public class NetherReactorItem extends BlockItem implements PolymerItem {
     }
 
     @Override
-    public ItemStack getDefaultStack() {
-
-        ItemStack defaultStack = super.getDefaultStack();
-        defaultStack.getOrCreateSubNbt("BlockStateTag")
-            .putString("activated", "default");
-
-        return defaultStack;
-
-    }
-
-    @Override
     public Item getPolymerItem(ItemStack stack, @Nullable ServerPlayerEntity player) {
         return getReactorStateModel(stack)
             .map(PolymerModelData::item)
             .orElse(DEFAULT_STATE_MODEL.item());
+    }
+
+    @Override
+    public ItemStack getPolymerItemStack(ItemStack itemStack, TooltipContext context, @Nullable ServerPlayerEntity player) {
+
+        ItemStack stack = PolymerItem.super.getPolymerItemStack(itemStack, context, player);
+        if (!PolymerResourcePackUtils.hasMainPack(player)) {
+            stack.addEnchantment(Enchantments.INFINITY, 0);
+        }
+
+        return stack;
+
     }
 
     @Override
@@ -134,11 +136,11 @@ public class NetherReactorItem extends BlockItem implements PolymerItem {
     }
 
     static {
-        DEFAULT_STATE_MODEL = PolymerResourcePackUtils.requestModel(Items.DIAMOND_BLOCK,
+        DEFAULT_STATE_MODEL = PolymerResourcePackUtils.requestModel(Items.LIGHT_BLUE_SHULKER_BOX,
             NetherReactorRevisited.id("item/reactor_core/default"));
-        ACTIVATED_STATE_MODEL = PolymerResourcePackUtils.requestModel(Items.REDSTONE_BLOCK,
+        ACTIVATED_STATE_MODEL = PolymerResourcePackUtils.requestModel(Items.RED_SHULKER_BOX,
             NetherReactorRevisited.id("item/reactor_core/activated"));
-        DEACTIVATED_STATE_MODEL = PolymerResourcePackUtils.requestModel(Items.OBSIDIAN,
+        DEACTIVATED_STATE_MODEL = PolymerResourcePackUtils.requestModel(Items.BLACK_SHULKER_BOX,
             NetherReactorRevisited.id("item/reactor_core/deactivated"));
     }
 

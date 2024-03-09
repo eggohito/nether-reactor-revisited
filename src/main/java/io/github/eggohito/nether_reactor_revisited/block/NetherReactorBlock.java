@@ -63,17 +63,20 @@ public class NetherReactorBlock extends Block implements PolymerTexturedBlock {
         MinecraftServer server = world.getServer();
         Text notificationText;
 
+        if (world.isClient || server == null) {
+            return ActionResult.CONSUME_PARTIAL;
+        }
+
         return switch (state.get(ACTIVATED)) {
             case DEFAULT -> {
 
-                if (server != null) {
-                    notificationText = Text
-                        .translatable("actions.nether-reactor-revisited.activate.success", player.getName())
-                        .styled(style -> style.withColor(Formatting.GREEN));
-                    server.getPlayerManager().broadcast(notificationText, false);
-                }
+                notificationText = Text
+                    .translatable("actions.nether-reactor-revisited.activate.success", player.getName())
+                    .styled(style -> style.withColor(Formatting.GREEN));
 
+                server.getPlayerManager().broadcast(notificationText, false);
                 world.setBlockState(pos, state.with(ACTIVATED, TriState.TRUE));
+
                 yield ActionResult.SUCCESS;
 
             }
@@ -95,12 +98,10 @@ public class NetherReactorBlock extends Block implements PolymerTexturedBlock {
 
                 }
 
-                if (server != null) {
-                    notificationText = Text
-                        .translatable("actions.nether-reactor-revisited.reactivate.success", player.getName())
-                        .styled(style -> style.withColor(Formatting.GREEN));
-                    server.getPlayerManager().broadcast(notificationText, false);
-                }
+                notificationText = Text
+                    .translatable("actions.nether-reactor-revisited.reactivate.success", player.getName())
+                    .styled(style -> style.withColor(Formatting.GREEN));
+                server.getPlayerManager().broadcast(notificationText, false);
 
                 stackInHand.decrement(1);
                 world.setBlockState(pos, state.with(ACTIVATED, TriState.TRUE));
@@ -115,11 +116,11 @@ public class NetherReactorBlock extends Block implements PolymerTexturedBlock {
     public Block getPolymerBlock(BlockState state) {
         return switch (state.get(ACTIVATED)) {
             case DEFAULT ->
-                Blocks.DIAMOND_BLOCK;
+                Blocks.LIGHT_BLUE_SHULKER_BOX;
             case TRUE ->
-                Blocks.REDSTONE_BLOCK;
+                Blocks.RED_SHULKER_BOX;
             case FALSE ->
-                Blocks.OBSIDIAN;
+                Blocks.BLACK_SHULKER_BOX;
         };
     }
 
