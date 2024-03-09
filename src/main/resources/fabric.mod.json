@@ -3,10 +3,10 @@
 	"id": "nether-reactor-revisited",
 	"version": "${version}",
 	"name": "Nether Reactor: Revisited",
-	"description": "A Fabric mod that re-adds the Nether Reactor Cores from Minecraft: Pocket Edition",
+	"description": "A Fabric mod that re-adds the Nether Reactor from Minecraft: Pocket Edition to modern versions of Minecraft: Java Edition for the Fabric mod loader.",
 	"authors": [
 		"eggohito",
-		"Foony"
+		"foony_"
 	],
 	"contact": {
 		"sources": "https://github.com/eggohito/nether-reactor-revisited"

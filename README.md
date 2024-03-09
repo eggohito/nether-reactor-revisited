@@ -1,9 +1,3 @@
-# Fabric Example Mod
+#   Nether Reactor: Revisited
 
-## Setup
-
-For setup instructions please see the [fabric wiki page](https://fabricmc.net/wiki/tutorial:setup) that relates to the IDE that you are using.
-
-## License
-
-This template is available under the CC0 license. Feel free to learn from it and incorporate it in your own projects.
+A Fabric mod that re-adds the Nether Reactor from Minecraft: Pocket Edition to modern versions of Minecraft: Java Edition for the Fabric mod loader.
