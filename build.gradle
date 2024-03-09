@@ -22,6 +22,7 @@ repositories {
 }
 
 loom {
+	accessWidenerPath = file("src/main/resources/nether-reactor-revisited.accesswidener")
     splitEnvironmentSourceSets()
 
 	mods {
