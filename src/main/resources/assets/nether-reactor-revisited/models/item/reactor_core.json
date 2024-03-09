@@ -1,0 +1,7 @@
+{
+    "parent": "minecraft:block/block",
+    "textures": {
+        "0": "nether-reactor-revisited:block/reactor_core/default",
+        "particle": "nether-reactor-revisited:block/reactor_core/default"
+    }
+}

@@ -1,0 +1,13 @@
+{
+    "variants": {
+        "activated=true": {
+            "model": "nether-reactor-revisited:block/reactor_core/activated"
+        },
+        "activated=false": {
+            "model": "nether-reactor-revisited:block/reactor_core/deactivated"
+        },
+        "activated=default": {
+            "model": "nether-reactor-revisited:block/reactor_core/default"
+        }
+    }
+}

@@ -1,0 +1,6 @@
+{
+    "parent": "minecraft:block/cube_all",
+    "textures": {
+        "all": "nether-reactor-revisited:block/reactor_core/default"
+    }
+}

@@ -1,0 +1,12 @@
+{
+    "actions.nether-reactor-revisited.reactivate.fail": "Cannot reactivate Nether Reactor!",
+    "actions.nether-reactor-revisited.reactivate.success": "%s reactivated a Nether Reactor!",
+    "actions.nether-reactor-revisited.activate.fail": "Cannot activate Nether Reactor!",
+    "actions.nether-reactor-revisited.activate.success": "%s activated a Nether Reactor!",
+    "states.nether-reactor-revisited.reactor_core.activated": "ACTIVATED",
+    "states.nether-reactor-revisited.reactor_core.deactivated": "DEACTIVATED",
+    "states.nether-reactor-revisited.reactor_core.default": "NORMAL",
+    "block.nether-reactor-revisited.reactor_core": "Reactor Core",
+    "item.nether-reactor-revisited.reactor_core": "Reactor Core",
+    "item.nether-reactor-revisited.reactor_core.state": "State: %s"
+}
