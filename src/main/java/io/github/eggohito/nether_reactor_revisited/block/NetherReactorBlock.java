@@ -9,7 +9,7 @@ import io.github.eggohito.nether_reactor_revisited.NetherReactorRevisited;
 import io.github.eggohito.nether_reactor_revisited.block.pattern.ReactorBlockPattern;
 import io.github.eggohito.nether_reactor_revisited.content.NRRBlockTags;
 import io.github.eggohito.nether_reactor_revisited.state.property.TriStateProperty;
-import io.github.eggohito.nether_reactor_revisited.util.DirectionUtil;
+import io.github.eggohito.nether_reactor_revisited.util.ReactorTriggerType;
 import net.fabricmc.fabric.api.tag.convention.v1.ConventionalItemTags;
 import net.fabricmc.fabric.api.util.TriState;
 import net.minecraft.block.Block;
@@ -17,8 +17,6 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.pattern.CachedBlockPosition;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.state.StateManager;
@@ -28,9 +26,9 @@ import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 
+//  TODO: Implement the block entity for this block
 public class NetherReactorBlock extends Block implements PolymerTexturedBlock {
 
     public static final ReactorBlockPattern DEFAULT_STRUCTURE_PATTERN;
@@ -39,9 +37,9 @@ public class NetherReactorBlock extends Block implements PolymerTexturedBlock {
 
     public static final TriStateProperty ACTIVATED;
 
-    public static final BlockState DEFAULT_STATE;
-    public static final BlockState ACTIVATED_STATE;
-    public static final BlockState DEACTIVATED_STATE;
+    protected static final BlockState DEFAULT_STATE;
+    protected static final BlockState ACTIVATED_STATE;
+    protected static final BlockState DEACTIVATED_STATE;
 
     public NetherReactorBlock(Settings settings) {
         super(settings);
@@ -61,7 +59,6 @@ public class NetherReactorBlock extends Block implements PolymerTexturedBlock {
         builder.add(ACTIVATED);
     }
 
-    //  TODO: Simplify and segregate stuff from this method
     @SuppressWarnings("deprecation")
     @Override
     public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hitResult) {
@@ -70,147 +67,25 @@ public class NetherReactorBlock extends Block implements PolymerTexturedBlock {
             return ActionResult.PASS;
         }
 
-        MinecraftServer server = world.getServer();
-        Text notificationText;
-
-        if (world.isClient || server == null) {
-            return ActionResult.CONSUME_PARTIAL;
-        }
-
-        Direction direction = DirectionUtil
-            .getFacingHorizontal(player.getRotationVector())
-            .getOpposite();
-        BlockPos frontTopLeftPos = pos.offset(direction)
-            .add(-direction.getOffsetZ(), 1, direction.getOffsetX());
-
         return switch (state.get(ACTIVATED)) {
-            case DEFAULT -> {
-
-                ReactorBlockPattern.Result patternResult = DEFAULT_STRUCTURE_PATTERN.testTransformSafely(world, frontTopLeftPos, direction.getOpposite(), Direction.UP);
-                if (patternResult.fail()) {
-
-                    BlockPos missingPos = patternResult.getMismatches().get(0);
-                    Direction missingSide = DirectionUtil.getNullableDirectionFromPos(pos, missingPos);
-
-                    if (missingSide == null) {
-                        notificationText = Text
-                            .translatable("actions.nether-reactor-revisited.activate.fail")
-                            .styled(style -> style.withColor(Formatting.RED));
-                    }
-
-                    else {
-
-                        Text sideText = switch (missingSide) {
-                            case UP ->
-                                Text.literal("upper");
-                            case DOWN ->
-                                Text.literal("lower");
-                            case EAST ->
-                                Text.literal("east");
-                            case WEST ->
-                                Text.literal("west");
-                            case NORTH ->
-                                Text.literal("north");
-                            case SOUTH ->
-                                Text.literal("south");
-                        };
-
-                        notificationText = Text
-                            .translatable("actions.nether-reactor-revisited.activate.fail.incorrect_side", sideText)
-                            .styled(style -> style.withColor(Formatting.RED));
-
-                    }
-
-                    player.sendMessage(notificationText, true);
-                    yield ActionResult.CONSUME_PARTIAL;
-
-                }
-
-                else {
-
-                    notificationText = Text
-                        .translatable("actions.nether-reactor-revisited.activate.success", player.getName())
-                        .styled(style -> style.withColor(Formatting.GREEN));
-
-                    server.getPlayerManager().broadcast(notificationText, false);
-                    world.setBlockState(pos, state.with(ACTIVATED, TriState.TRUE));
-
-                    yield ActionResult.SUCCESS;
-
-                }
-
-            }
+            case DEFAULT ->
+                ReactorTriggerType.ACTIVATION.trigger(state, world, pos, player, hand, hitResult);
             case TRUE -> {
-                world.setBlockState(pos, state.with(ACTIVATED, TriState.FALSE));
-                yield ActionResult.SUCCESS;
+                world.setBlockState(pos, state.withIfExists(ACTIVATED, TriState.FALSE));
+                yield ActionResult.CONSUME_PARTIAL;
             }
             case FALSE -> {
 
-                ItemStack stackInHand = player.getStackInHand(hand);
-                if (!stackInHand.isIn(ConventionalItemTags.DIAMONDS)) {
-
-                    notificationText = Text
-                        .translatable("actions.nether-reactor-revisited.reactivate.fail")
-                        .styled(style -> style.withColor(Formatting.RED));
-
-                    player.sendMessage(notificationText, true);
-                    yield ActionResult.CONSUME_PARTIAL;
-
+                if (player.getStackInHand(hand).isIn(ConventionalItemTags.DIAMONDS)) {
+                    yield ReactorTriggerType.REACTIVATION.trigger(state, world, pos, player, hand, hitResult);
                 }
 
-                ReactorBlockPattern.Result patternResult = DEACTIVATED_STRUCTURE_PATTERN.testTransformSafely(world, frontTopLeftPos, direction.getOpposite(), Direction.UP);
-                if (patternResult.fail()) {
+                Text notificationText = Text
+                    .translatable("actions.nether-reactor-revisited.reactivate.fail.unmet_requirements")
+                    .styled(style -> style.withColor(Formatting.RED));
 
-                    BlockPos missingPos = patternResult.getMismatches().get(0);
-                    Direction missingSide = DirectionUtil.getNullableDirectionFromPos(pos, missingPos);
-
-                    if (missingSide == null) {
-                        notificationText = Text
-                            .translatable("actions.nether-reactor-revisited.reactivate.fail")
-                            .styled(style -> style.withColor(Formatting.RED));
-                    }
-
-                    else {
-
-                        Text sideText = switch (missingSide) {
-                            case UP ->
-                                Text.literal("upper");
-                            case DOWN ->
-                                Text.literal("lower");
-                            case EAST ->
-                                Text.literal("east");
-                            case WEST ->
-                                Text.literal("west");
-                            case NORTH ->
-                                Text.literal("north");
-                            case SOUTH ->
-                                Text.literal("south");
-                        };
-
-                        notificationText = Text
-                            .translatable("actions.nether-reactor-revisited.reactivate.fail.incorrect_side", sideText)
-                            .styled(style -> style.withColor(Formatting.RED));
-
-                    }
-
-                    player.sendMessage(notificationText, true);
-                    yield ActionResult.CONSUME_PARTIAL;
-
-                }
-
-                else {
-
-                    notificationText = Text
-                        .translatable("actions.nether-reactor-revisited.reactivate.success", player.getName())
-                        .styled(style -> style.withColor(Formatting.GREEN));
-                    server.getPlayerManager().broadcast(notificationText, false);
-
-                    stackInHand.decrement(1);
-                    world.setBlockState(pos, state.with(ACTIVATED, TriState.TRUE));
-
-                    yield ActionResult.SUCCESS;
-
-                }
+                player.sendMessage(notificationText, true);
+                yield ActionResult.CONSUME_PARTIAL;
 
             }
         };
@@ -261,6 +136,7 @@ public class NetherReactorBlock extends Block implements PolymerTexturedBlock {
             .aisle("###", "~ ~", "###")
             .aisle(" # ", "#~#", " # ")
             .where('#', CachedBlockPosition.matchesBlockState(state -> state.isIn(NRRBlockTags.ACTIVATED_PATTERN_BLOCKS)))
+            .where('~', CachedBlockPosition.matchesBlockState(AbstractBlockState::isAir))
             .build();
         DEACTIVATED_STRUCTURE_PATTERN = ReactorBlockPattern.Builder.start()
             .aisle("~#~", "#~#", "@#@")

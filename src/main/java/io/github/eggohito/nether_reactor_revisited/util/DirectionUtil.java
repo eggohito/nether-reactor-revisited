@@ -1,9 +1,9 @@
 package io.github.eggohito.nether_reactor_revisited.util;
 
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
-import org.jetbrains.annotations.Nullable;
+import net.minecraft.util.math.*;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class DirectionUtil {
 
@@ -28,26 +28,30 @@ public class DirectionUtil {
 
     }
 
-    @Nullable
-    public static Direction getNullableDirectionFromPos(BlockPos first, BlockPos second) {
+    public static Set<Direction> getDirectionsFromPos(BlockPos first, BlockPos second) {
+        BlockPos pos = second.subtract(first);
+        return Arrays.stream(Direction.values())
+            .filter(direction -> directionallyEqual(direction, pos))
+            .collect(Collectors.toCollection(LinkedHashSet::new));
+    }
 
-        BlockPos pos = first.subtract(second);
-        Direction result = null;
+    public static boolean directionallyEqual(Direction direction, Vec3i second) {
 
-        double previous = Double.MIN_VALUE;
-        for (Direction direction : Direction.values()) {
+        //  Clamp the values from all axis of the vector from -1 to 1
+        Vec3i directionVector = new Vec3i(
+            MathHelper.clamp(second.getX(), -1, 1),
+            MathHelper.clamp(second.getY(), -1, 1),
+            MathHelper.clamp(second.getZ(), -1, 1)
+        );
 
-            double current = pos.getX() * direction.getVector().getX() + pos.getY() * direction.getVector().getY() + pos.getZ() * direction.getVector().getZ();
-            if (current < previous) {
-                continue;
-            }
-
-            previous = current;
-            result = direction;
-
-        }
-
-        return result;
+        return switch (direction.getAxis()) {
+            case X ->
+                directionVector.getX() == second.getX();
+            case Y ->
+                directionVector.getY() == second.getY();
+            case Z ->
+                directionVector.getZ() == second.getZ();
+        };
 
     }
 

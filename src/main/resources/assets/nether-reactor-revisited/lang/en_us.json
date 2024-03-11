@@ -1,9 +1,10 @@
 {
     "actions.nether-reactor-revisited.activate.fail": "Cannot activate the Nether Reactor!",
-    "actions.nether-reactor-revisited.activate.fail.incorrect_side": "The %s side of the Nether Reactor is incomplete/incorrect!",
+    "actions.nether-reactor-revisited.activate.fail.side_mismatch": "The %s side(s) of the Nether Reactor is incomplete/incorrect!",
     "actions.nether-reactor-revisited.activate.success": "%s activated a Nether Reactor!",
     "actions.nether-reactor-revisited.reactivate.fail": "Cannot reactivate the Nether Reactor!",
-    "actions.nether-reactor-revisited.reactivate.fail.incorrect_side": "The %s side of the Nether Reactor is incomplete/incorrect!",
+    "actions.nether-reactor-revisited.reactivate.fail.side_mismatch": "The %s side(s) of the Nether Reactor is incomplete/incorrect!",
+    "actions.nether-reactor-revisited.reactivate.fail.unmet_requirements": "The Nether Reactor requires 1 diamond to be reactivated!",
     "actions.nether-reactor-revisited.reactivate.success": "%s reactivated a Nether Reactor!",
     "block.nether-reactor-revisited.reactor_core": "Reactor Core",
     "item.nether-reactor-revisited.reactor_core": "Reactor Core",
