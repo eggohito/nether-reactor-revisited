@@ -7,27 +7,6 @@ import java.util.stream.Collectors;
 
 public class DirectionUtil {
 
-    public static Direction getFacingHorizontal(Vec3d vector) {
-
-        Direction result = Direction.NORTH;
-        double previous = Double.MIN_VALUE;
-
-        for (Direction direction : Direction.values()) {
-
-            double current = vector.x * direction.getVector().getX() + vector.z * direction.getVector().getZ();
-            if (current < previous) {
-                continue;
-            }
-
-            previous = current;
-            result = direction;
-
-        }
-
-        return result;
-
-    }
-
     public static Set<Direction> getDirectionsFromPos(BlockPos first, BlockPos second) {
         BlockPos pos = second.subtract(first);
         return Arrays.stream(Direction.values())
@@ -35,14 +14,14 @@ public class DirectionUtil {
             .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
-    public static boolean directionallyEqual(Direction direction, Vec3i second) {
+    public static boolean directionallyEqual(Direction direction, Vec3i pos) {
 
         //  Clamp the values from all axis of the vector from -1 to 1
         Vec3i directionVector = direction.getVector();
         Vec3i normalizedPos = new Vec3i(
-            MathHelper.clamp(second.getX(), -1, 1),
-            MathHelper.clamp(second.getY(), -1, 1),
-            MathHelper.clamp(second.getZ(), -1, 1)
+            MathHelper.clamp(pos.getX(), -1, 1),
+            MathHelper.clamp(pos.getY(), -1, 1),
+            MathHelper.clamp(pos.getZ(), -1, 1)
         );
 
         return switch (direction.getAxis()) {

@@ -40,8 +40,7 @@ public enum ReactorTriggerType {
             return ActionResult.CONSUME_PARTIAL;
         }
 
-        Direction facingDirection = DirectionUtil
-            .getFacingHorizontal(player.getRotationVector());
+        Direction facingDirection = player.getHorizontalFacing();
         Direction oppositeFacingDirection = facingDirection
             .getOpposite();
         BlockPos frontTopLeftPos = pos
