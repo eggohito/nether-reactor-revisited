@@ -38,7 +38,8 @@ public class DirectionUtil {
     public static boolean directionallyEqual(Direction direction, Vec3i second) {
 
         //  Clamp the values from all axis of the vector from -1 to 1
-        Vec3i directionVector = new Vec3i(
+        Vec3i directionVector = direction.getVector();
+        Vec3i normalizedPos = new Vec3i(
             MathHelper.clamp(second.getX(), -1, 1),
             MathHelper.clamp(second.getY(), -1, 1),
             MathHelper.clamp(second.getZ(), -1, 1)
@@ -46,11 +47,11 @@ public class DirectionUtil {
 
         return switch (direction.getAxis()) {
             case X ->
-                directionVector.getX() == second.getX();
+                directionVector.getX() == normalizedPos.getX();
             case Y ->
-                directionVector.getY() == second.getY();
+                directionVector.getY() == normalizedPos.getY();
             case Z ->
-                directionVector.getZ() == second.getZ();
+                directionVector.getZ() == normalizedPos.getZ();
         };
 
     }
