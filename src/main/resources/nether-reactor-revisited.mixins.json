@@ -3,7 +3,12 @@
     "package": "io.github.eggohito.nether_reactor_revisited.mixin",
     "compatibilityLevel": "JAVA_17",
     "mixins": [
-        "ExampleMixin"
+        "BooleanRuleAccessor",
+        "EntityMixin",
+        "PlayerEntityMixin",
+        "gamerule.enter_and_exit_nether.AbstractFireBlockMixin",
+        "gamerule.enter_and_exit_nether.NetherPortalBlockMixin",
+        "gamerule.enter_and_exit_nether.ServerPlayerInteractionManagerMixin"
     ],
     "injectors": {
         "defaultRequire": 1
