@@ -13,7 +13,6 @@ import io.github.eggohito.nether_reactor_revisited.content.NRRBlockEntities;
 import io.github.eggohito.nether_reactor_revisited.content.NRRBlockTags;
 import io.github.eggohito.nether_reactor_revisited.state.property.TriStateProperty;
 import io.github.eggohito.nether_reactor_revisited.util.ReactorTriggerType;
-import net.fabricmc.fabric.api.tag.convention.v1.ConventionalItemTags;
 import net.fabricmc.fabric.api.util.TriState;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -27,9 +26,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.state.StateManager;
-import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
-import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
@@ -82,20 +79,8 @@ public class NetherReactorBlock extends BlockWithEntity implements PolymerTextur
                 world.setBlockState(pos, state.withIfExists(ACTIVATED, TriState.FALSE));
                 yield ActionResult.CONSUME_PARTIAL;
             }
-            case FALSE -> {
-
-                if (player.getStackInHand(hand).isIn(ConventionalItemTags.DIAMONDS)) {
-                    yield ReactorTriggerType.REACTIVATION.trigger(state, world, pos, player, hand, hitResult);
-                }
-
-                Text notificationText = Text
-                    .translatable("actions.nether-reactor-revisited.reactivate.fail.unmet_requirements")
-                    .styled(style -> style.withColor(Formatting.RED));
-
-                player.sendMessage(notificationText, true);
-                yield ActionResult.CONSUME_PARTIAL;
-
-            }
+            case FALSE ->
+                ReactorTriggerType.REACTIVATION.trigger(state, world, pos, player, hand, hitResult);
         };
     }
 
