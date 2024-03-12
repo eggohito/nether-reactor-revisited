@@ -14,17 +14,13 @@ import java.util.function.Supplier;
 
 public class NRRBlocks {
 
-    public static final NetherReactorBlock REACTOR_CORE;
+    public static final NetherReactorBlock REACTOR_CORE = registerWithItem("reactor_core",
+        NetherReactorBlock::new,
+        block -> new NetherReactorItem(block, new Item.Settings())
+    );
 
     public static void registerAll() {
 
-    }
-
-    static {
-        REACTOR_CORE = registerWithItem("reactor_core",
-            NetherReactorBlock::new,
-            block -> new NetherReactorItem(block, new Item.Settings())
-        );
     }
 
     public static <T extends Block> T register(String name, Supplier<T> blockSupplier) {

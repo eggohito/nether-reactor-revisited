@@ -1,6 +1,7 @@
 package io.github.eggohito.nether_reactor_revisited.util;
 
 import io.github.eggohito.nether_reactor_revisited.block.NetherReactorBlock;
+import io.github.eggohito.nether_reactor_revisited.block.entity.NetherReactorBlockEntity;
 import io.github.eggohito.nether_reactor_revisited.block.pattern.ReactorBlockPattern;
 import net.fabricmc.fabric.api.util.TriState;
 import net.minecraft.block.BlockState;
@@ -36,7 +37,7 @@ public enum ReactorTriggerType {
         MinecraftServer server = world.getServer();
         Text notificationText;
 
-        if (world.isClient || server == null) {
+        if (world.isClient || server == null || !(world.getBlockEntity(pos) instanceof NetherReactorBlockEntity netherReactor)) {
             return ActionResult.CONSUME_PARTIAL;
         }
 
@@ -53,8 +54,9 @@ public enum ReactorTriggerType {
             notificationText = Text
                 .translatable("actions." + baseTranslationKey + ".success", player.getName())
                 .styled(style -> style.withColor(Formatting.GREEN));
-
             server.getPlayerManager().broadcast(notificationText, false);
+
+            netherReactor.activate();
             world.setBlockState(pos, state.withIfExists(NetherReactorBlock.ACTIVATED, TriState.TRUE));
 
             return ActionResult.SUCCESS;

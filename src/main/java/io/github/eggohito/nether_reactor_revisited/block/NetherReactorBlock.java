@@ -1,12 +1,15 @@
 package io.github.eggohito.nether_reactor_revisited.block;
 
+import com.mojang.serialization.MapCodec;
 import eu.pb4.polymer.blocks.api.BlockModelType;
 import eu.pb4.polymer.blocks.api.PolymerBlockModel;
 import eu.pb4.polymer.blocks.api.PolymerBlockResourceUtils;
 import eu.pb4.polymer.blocks.api.PolymerTexturedBlock;
 import eu.pb4.polymer.resourcepack.api.PolymerResourcePackUtils;
 import io.github.eggohito.nether_reactor_revisited.NetherReactorRevisited;
+import io.github.eggohito.nether_reactor_revisited.block.entity.NetherReactorBlockEntity;
 import io.github.eggohito.nether_reactor_revisited.block.pattern.ReactorBlockPattern;
+import io.github.eggohito.nether_reactor_revisited.content.NRRBlockEntities;
 import io.github.eggohito.nether_reactor_revisited.content.NRRBlockTags;
 import io.github.eggohito.nether_reactor_revisited.state.property.TriStateProperty;
 import io.github.eggohito.nether_reactor_revisited.util.ReactorTriggerType;
@@ -14,7 +17,11 @@ import net.fabricmc.fabric.api.tag.convention.v1.ConventionalItemTags;
 import net.fabricmc.fabric.api.util.TriState;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.BlockWithEntity;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.block.entity.BlockEntityTicker;
+import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.block.pattern.CachedBlockPosition;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -27,14 +34,15 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import org.jetbrains.annotations.Nullable;
 
-//  TODO: Implement the block entity for this block
-public class NetherReactorBlock extends Block implements PolymerTexturedBlock {
+public class NetherReactorBlock extends BlockWithEntity implements PolymerTexturedBlock {
 
     public static final ReactorBlockPattern DEFAULT_STRUCTURE_PATTERN;
     public static final ReactorBlockPattern ACTIVATED_STRUCTURE_PATTERN;
     public static final ReactorBlockPattern DEACTIVATED_STRUCTURE_PATTERN;
 
+    public static final MapCodec<NetherReactorBlock> CODEC;
     public static final TriStateProperty ACTIVATED;
 
     protected static final BlockState DEFAULT_STATE;
@@ -89,6 +97,25 @@ public class NetherReactorBlock extends Block implements PolymerTexturedBlock {
 
             }
         };
+    }
+
+    @Override
+    protected MapCodec<? extends BlockWithEntity> getCodec() {
+        return CODEC;
+    }
+
+    @Nullable
+    @Override
+    public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
+        return new NetherReactorBlockEntity(pos, state);
+    }
+
+    @Nullable
+    @Override
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {
+        return state.getOrEmpty(ACTIVATED).map(triState -> triState == TriState.TRUE).orElse(false)
+            ? validateTicker(type, NRRBlockEntities.REACTOR_CORE, NetherReactorBlockEntity::tick)
+            : null;
     }
 
     @Override
@@ -147,6 +174,7 @@ public class NetherReactorBlock extends Block implements PolymerTexturedBlock {
             .where('~', CachedBlockPosition.matchesBlockState(AbstractBlockState::isAir))
             .build();
 
+        CODEC = createCodec(NetherReactorBlock::new);
         ACTIVATED = new TriStateProperty("activated");
 
         DEFAULT_STATE = PolymerBlockResourceUtils.requestBlock(BlockModelType.FULL_BLOCK,
