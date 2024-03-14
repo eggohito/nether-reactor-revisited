@@ -1,8 +1,8 @@
-package io.github.eggohito.nether_reactor_revisited.mixin;
+package io.github.eggohito.nether_reactor_revisited.mixin.gamerule.enter_and_exit_nether;
 
 import eu.pb4.polymer.core.api.utils.PolymerUtils;
 import io.github.eggohito.nether_reactor_revisited.duck.InventoryHolder;
-import io.github.eggohito.nether_reactor_revisited.duck.BlockCollidable;
+import io.github.eggohito.nether_reactor_revisited.duck.BlockCollider;
 import io.github.eggohito.nether_reactor_revisited.duck.gamerule.enter_and_exit_nether.Notifiable;
 import net.minecraft.block.Block;
 import net.minecraft.block.NetherPortalBlock;
@@ -22,7 +22,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Mixin(PlayerEntity.class)
-public abstract class PlayerEntityMixin extends Entity implements Attackable, Notifiable, BlockCollidable, InventoryHolder {
+public abstract class PlayerEntityMixin extends Entity implements Attackable, Notifiable, BlockCollider, InventoryHolder {
 
     private PlayerEntityMixin(EntityType<?> type, World world) {
         super(type, world);

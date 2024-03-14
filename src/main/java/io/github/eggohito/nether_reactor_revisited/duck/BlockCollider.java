@@ -5,7 +5,7 @@ import net.minecraft.block.Block;
 import java.util.HashSet;
 import java.util.Set;
 
-public interface BlockCollidable {
+public interface BlockCollider {
 
     default Set<Block> nrr$getCollidedBlocks() {
         return new HashSet<>();
