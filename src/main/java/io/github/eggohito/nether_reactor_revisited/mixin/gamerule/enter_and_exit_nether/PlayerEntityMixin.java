@@ -32,9 +32,6 @@ public abstract class PlayerEntityMixin extends Entity implements Attackable, No
     private final Set<Block> nrr$collidedBlocks = new HashSet<>();
 
     @Unique
-    private boolean nrr$toNotify = false;
-
-    @Unique
     private boolean nrr$notified = false;
 
     @Unique
@@ -56,18 +53,8 @@ public abstract class PlayerEntityMixin extends Entity implements Attackable, No
     }
 
     @Override
-    public boolean nrr$toBeNotified() {
-        return nrr$toNotify;
-    }
-
-    @Override
     public void nrr$setNotified(boolean notified) {
         this.nrr$notified = notified;
-    }
-
-    @Override
-    public void nrr$setToNotify(boolean toNotify) {
-        this.nrr$toNotify = toNotify;
     }
 
     @Override
@@ -89,10 +76,6 @@ public abstract class PlayerEntityMixin extends Entity implements Attackable, No
 
         if (this.nrr$wasNotified() && this.nrr$getCollidedBlocks().stream().noneMatch(block -> block instanceof NetherPortalBlock)) {
             this.nrr$setNotified(false);
-        }
-
-        if (this.nrr$toBeNotified()) {
-            this.nrr$setToNotify(false);
         }
 
         if (this.nrr$shouldReloadInventory()) {

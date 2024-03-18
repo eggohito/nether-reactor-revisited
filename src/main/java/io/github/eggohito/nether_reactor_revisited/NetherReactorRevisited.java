@@ -1,9 +1,7 @@
 package io.github.eggohito.nether_reactor_revisited;
 
 import eu.pb4.polymer.resourcepack.api.PolymerResourcePackUtils;
-import io.github.eggohito.nether_reactor_revisited.content.NRRBlockEntities;
-import io.github.eggohito.nether_reactor_revisited.content.NRRBlocks;
-import io.github.eggohito.nether_reactor_revisited.content.NRRGameRules;
+import io.github.eggohito.nether_reactor_revisited.content.*;
 import net.fabricmc.api.ModInitializer;
 import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
@@ -19,7 +17,10 @@ public class NetherReactorRevisited implements ModInitializer {
 
 		NRRBlocks.registerAll();
 		NRRBlockEntities.registerAll();
+		NRRAttachmentTypes.registerAll();
+		NRREnchantments.registerAll();
 		NRRGameRules.registerAll();
+		NRREvents.registerAll();
 
 		PolymerResourcePackUtils.addModAssets(MOD_NAMESPACE);
 		PolymerResourcePackUtils.markAsRequired();

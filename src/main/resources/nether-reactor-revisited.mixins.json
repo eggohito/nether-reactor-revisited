@@ -5,9 +5,10 @@
     "mixins": [
         "BooleanRuleAccessor",
         "EntityMixin",
-        "gamerule.enter_and_exit_nether.PlayerEntityMixin",
         "gamerule.enter_and_exit_nether.AbstractFireBlockMixin",
+        "gamerule.enter_and_exit_nether.DispenserBlockMixin",
         "gamerule.enter_and_exit_nether.NetherPortalBlockMixin",
+        "gamerule.enter_and_exit_nether.PlayerEntityMixin",
         "gamerule.enter_and_exit_nether.ServerPlayerInteractionManagerMixin"
     ],
     "injectors": {
