@@ -24,6 +24,7 @@ import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.block.pattern.CachedBlockPosition;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.state.StateManager;
 import net.minecraft.util.ActionResult;
@@ -68,20 +69,16 @@ public class NetherReactorBlock extends BlockWithEntity implements PolymerTextur
     @Override
     public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hitResult) {
 
-        if (hand == Hand.OFF_HAND) {
+        if (!(world instanceof ServerWorld serverWorld) || !(world.getBlockEntity(pos) instanceof NetherReactorBlockEntity netherReactor)) {
             return ActionResult.PASS;
         }
 
-        return switch (state.get(ACTIVATED)) {
-            case DEFAULT ->
-                ReactorTriggerType.ACTIVATION.trigger(state, world, pos, player, hand, hitResult);
-            case TRUE -> {
-                world.setBlockState(pos, state.withIfExists(ACTIVATED, TriState.FALSE));
-                yield ActionResult.CONSUME_PARTIAL;
-            }
-            case FALSE ->
-                ReactorTriggerType.REACTIVATION.trigger(state, world, pos, player, hand, hitResult);
-        };
+        return state.getOrEmpty(ACTIVATED)
+            .map(triState -> ReactorTriggerType
+                .fromTriState(triState)
+                .trigger(netherReactor, state, serverWorld, pos, player, hand, hitResult))
+            .orElse(ActionResult.PASS);
+
     }
 
     @Override
@@ -98,7 +95,7 @@ public class NetherReactorBlock extends BlockWithEntity implements PolymerTextur
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {
-        return state.getOrEmpty(ACTIVATED).map(triState -> triState == TriState.TRUE).orElse(false)
+        return state.getOrEmpty(ACTIVATED).map(TriState::get).orElse(false)
             ? validateTicker(type, NRRBlockEntities.REACTOR_CORE, NetherReactorBlockEntity::tick)
             : null;
     }

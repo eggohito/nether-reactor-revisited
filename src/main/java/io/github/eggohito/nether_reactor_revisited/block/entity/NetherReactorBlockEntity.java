@@ -46,6 +46,12 @@ public class NetherReactorBlockEntity extends BlockEntity implements Clearable {
         this.forgeUses = 0;
     }
 
+    public long getElapsedTime() {
+        return this.world instanceof ServerWorld serverWorld && this.lastActiveTime > 0
+            ? serverWorld.getTime() - this.lastActiveTime
+            : 0L;
+    }
+
     public void activate() {
 
         if (!(this.world instanceof ServerWorld serverWorld)) {
@@ -85,12 +91,6 @@ public class NetherReactorBlockEntity extends BlockEntity implements Clearable {
         this.markDirty();
         return ReactorForgeResult.SUCCESS;
 
-    }
-
-    public static ReactorForgeResult forgeItem(World world, BlockPos pos, ItemStack stack, Predicate<ItemStack> applicableCondition) {
-        return world.getBlockEntity(pos) instanceof NetherReactorBlockEntity netherReactor
-            ? netherReactor.forgeItem(stack, applicableCondition)
-            : ReactorForgeResult.FAIL;
     }
 
     public static void tick(World world, BlockPos pos, BlockState state, NetherReactorBlockEntity blockEntity) {

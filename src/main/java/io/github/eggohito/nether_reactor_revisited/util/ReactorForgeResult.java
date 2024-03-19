@@ -18,7 +18,7 @@ public enum ReactorForgeResult {
 
     ReactorForgeResult(String name, Formatting formatting) {
         this.name = name;
-        this.translationKey = Util.createTranslationKey("actions", NetherReactorRevisited.id("forge_item/" + name));
+        this.translationKey = Util.createTranslationKey("trigger", NetherReactorRevisited.id("forge_item/" + name));
         this.formatting = formatting;
     }
 

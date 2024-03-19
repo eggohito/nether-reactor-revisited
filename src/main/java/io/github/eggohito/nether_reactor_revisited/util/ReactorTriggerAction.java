@@ -1,5 +1,6 @@
 package io.github.eggohito.nether_reactor_revisited.util;
 
+import io.github.eggohito.nether_reactor_revisited.block.entity.NetherReactorBlockEntity;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.Style;
@@ -16,6 +17,6 @@ public interface ReactorTriggerAction {
     Style ERROR_STYLE = Style.EMPTY.withColor(Formatting.RED);
     Style SUCCESS_STYLE = Style.EMPTY.withColor(Formatting.GREEN);
 
-    ActionResult accept(ReactorTriggerType triggerType, BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hitResult);
+    ActionResult accept(ReactorTriggerType triggerType, NetherReactorBlockEntity netherReactor, BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hitResult);
 
 }
