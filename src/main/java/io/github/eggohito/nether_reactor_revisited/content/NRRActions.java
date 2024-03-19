@@ -1,8 +1,10 @@
 package io.github.eggohito.nether_reactor_revisited.content;
 
 import io.github.eggohito.nether_reactor_revisited.block.NetherReactorBlock;
+import io.github.eggohito.nether_reactor_revisited.block.entity.NetherReactorBlockEntity;
 import io.github.eggohito.nether_reactor_revisited.block.pattern.ReactorBlockPattern;
 import io.github.eggohito.nether_reactor_revisited.util.DirectionUtil;
+import io.github.eggohito.nether_reactor_revisited.util.ReactorForgeResult;
 import io.github.eggohito.nether_reactor_revisited.util.ReactorTriggerAction;
 import io.github.eggohito.nether_reactor_revisited.util.ReactorTriggerType;
 import net.fabricmc.fabric.api.tag.convention.v1.ConventionalItemTags;
@@ -135,11 +137,11 @@ public class NRRActions {
 
                 separator = maxIterations == 2 || maxIterations == 3
                     ? Text.literal("-")
-                    .styled(style -> style.withColor(Formatting.YELLOW))
+                        .styled(style -> style.withColor(Formatting.YELLOW))
                     : (iterations < maxIterations - 1
-                    ? Text.literal(", ")
-                    : Text.literal(" and "))
-                    .styled(style -> style.withColor(Formatting.RED));
+                        ? Text.literal(", ")
+                        : Text.literal(" and "))
+                            .styled(style -> style.withColor(Formatting.RED));
 
             }
 
@@ -187,6 +189,27 @@ public class NRRActions {
         player.sendMessage(Text
             .translatable("actions." + triggerType.getBaseTranslationKey() + ".fail.unmet_requirements")
             .setStyle(ReactorTriggerAction.ERROR_STYLE), true);
+
+        return ActionResult.CONSUME_PARTIAL;
+
+    };
+
+    public static final ReactorTriggerAction FORGE_HELL_LIGHTER = (triggerType, state, world, pos, player, hand, hitResult) -> {
+
+        if (triggerType == ReactorTriggerType.ACTIVATION) {
+            return ActionResult.SUCCESS;
+        }
+
+        ItemStack stackInHand = player.getStackInHand(hand);
+        ReactorForgeResult result = NetherReactorBlockEntity.forgeItem(world, pos, stackInHand, NRREnchantments::canApplyHellLighter);
+
+        if (result == ReactorForgeResult.INAPPLICABLE) {
+            return ActionResult.SUCCESS;
+        }
+
+        player.sendMessage(Text
+            .translatable(result.getTranslationKey(), stackInHand.getName())
+            .formatted(result.getFormatting()), true);
 
         return ActionResult.CONSUME_PARTIAL;
 

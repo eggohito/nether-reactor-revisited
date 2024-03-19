@@ -5,6 +5,7 @@
     "mixins": [
         "BooleanRuleAccessor",
         "EntityMixin",
+        "IntRuleAccessor",
         "gamerule.enter_and_exit_nether.AbstractFireBlockMixin",
         "gamerule.enter_and_exit_nether.DispenserBlockMixin",
         "gamerule.enter_and_exit_nether.NetherPortalBlockMixin",

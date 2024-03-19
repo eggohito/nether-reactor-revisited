@@ -1,6 +1,7 @@
 package io.github.eggohito.nether_reactor_revisited.content;
 
 import io.github.eggohito.nether_reactor_revisited.mixin.BooleanRuleAccessor;
+import io.github.eggohito.nether_reactor_revisited.mixin.IntRuleAccessor;
 import net.fabricmc.fabric.api.gamerule.v1.GameRuleRegistry;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.World;
@@ -15,11 +16,22 @@ public class NRRGameRules {
         GameRules.Category.MISC, BooleanRuleAccessor.callCreate(true)
     );
 
+    public static final GameRules.Key<GameRules.IntRule> MAX_FORGE_USES = GameRuleRegistry.register("nether-reactor-revisited:maxForgeUses",
+        GameRules.Category.MISC, IntRuleAccessor.callCreate(3)
+    );
+
     public static <T extends GameRules.Rule<T>> boolean getBooleanOrDefault(GameRules.Key<T> key, World world, boolean defaultValue) {
         T rule = world.getGameRules().get(key);
         return !(rule instanceof GameRules.BooleanRule booleanRule)
             ? defaultValue
             : booleanRule.get();
+    }
+
+    public static <T extends GameRules.Rule<T>> int getIntOrDefault(GameRules.Key<T> key, World world, int defaultValue) {
+        T rule = world.getGameRules().get(key);
+        return !(rule instanceof GameRules.IntRule intRule)
+            ? defaultValue
+            : intRule.get();
     }
 
     public static void registerAll() {

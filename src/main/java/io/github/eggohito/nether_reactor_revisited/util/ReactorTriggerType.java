@@ -4,7 +4,6 @@ import io.github.eggohito.nether_reactor_revisited.block.NetherReactorBlock;
 import io.github.eggohito.nether_reactor_revisited.block.entity.NetherReactorBlockEntity;
 import io.github.eggohito.nether_reactor_revisited.block.pattern.ReactorBlockPattern;
 import io.github.eggohito.nether_reactor_revisited.content.NRRActions;
-import net.fabricmc.fabric.api.util.TriState;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
@@ -21,7 +20,7 @@ public enum ReactorTriggerType {
         NRRActions.HAS_REACTOR_STRUCTURE, NRRActions.IS_REACTOR_LEVEL_WITH_PLAYER, NRRActions.PLAYERS_TOO_FAR_AWAY,
         NRRActions.ANOTHER_REACTOR_NEARBY),
     REACTIVATION(NetherReactorBlock.DEACTIVATED_STRUCTURE_PATTERN, "nether-reactor-revisited.reactivate",
-        NRRActions.CAN_REACTIVATE, NRRActions.HAS_REACTOR_STRUCTURE, NRRActions.IS_REACTOR_LEVEL_WITH_PLAYER,
+        NRRActions.HAS_REACTOR_STRUCTURE, NRRActions.FORGE_HELL_LIGHTER, NRRActions.CAN_REACTIVATE, NRRActions.IS_REACTOR_LEVEL_WITH_PLAYER,
         NRRActions.PLAYERS_TOO_FAR_AWAY, NRRActions.ANOTHER_REACTOR_NEARBY);
 
     final ReactorTriggerAction[] actions;
@@ -63,12 +62,10 @@ public enum ReactorTriggerType {
 
         }
 
+        netherReactor.activate();
         server.getPlayerManager().broadcast(Text
             .translatable("actions." + baseTranslationKey + ".success", player.getName())
             .setStyle(ReactorTriggerAction.SUCCESS_STYLE), false);
-
-        netherReactor.activate();
-        world.setBlockState(pos, state.withIfExists(NetherReactorBlock.ACTIVATED, TriState.TRUE));
 
         return ActionResult.SUCCESS;
 

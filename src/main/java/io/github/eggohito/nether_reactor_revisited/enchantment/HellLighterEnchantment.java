@@ -29,6 +29,8 @@ public class HellLighterEnchantment extends Enchantment implements PolymerEnchan
         return false;
     }
 
+    //  TODO: Also check if the item stack is in an item tag to account for items
+    //        that functions similarly to a flint and steel item, but doesn't extend it
     @Override
     public boolean isAcceptableItem(ItemStack stack) {
         return stack.getItem() instanceof FlintAndSteelItem;

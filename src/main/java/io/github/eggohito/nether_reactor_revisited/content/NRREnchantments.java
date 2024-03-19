@@ -18,6 +18,15 @@ public class NRREnchantments {
         return EnchantmentHelper.getLevel(HELL_LIGHTER, stack) > 0;
     }
 
+    public static boolean canApplyHellLighter(ItemStack stack) {
+        return canApply(HELL_LIGHTER, stack);
+    }
+
+    public static boolean canApply(Enchantment enchantment, ItemStack stack) {
+        return enchantment.isAcceptableItem(stack)
+            && EnchantmentHelper.isCompatible(EnchantmentHelper.get(stack).keySet(), enchantment);
+    }
+
     public static void registerAll() {
 
     }
