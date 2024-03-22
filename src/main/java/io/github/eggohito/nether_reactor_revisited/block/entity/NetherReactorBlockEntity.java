@@ -4,6 +4,7 @@ import io.github.eggohito.nether_reactor_revisited.block.NetherReactorBlock;
 import io.github.eggohito.nether_reactor_revisited.content.NRRBlockEntities;
 import io.github.eggohito.nether_reactor_revisited.content.NRREnchantments;
 import io.github.eggohito.nether_reactor_revisited.content.NRRGameRules;
+import io.github.eggohito.nether_reactor_revisited.util.ReactorActivityPhase;
 import io.github.eggohito.nether_reactor_revisited.util.ReactorForgeResult;
 import net.fabricmc.fabric.api.util.TriState;
 import net.minecraft.block.BlockState;
@@ -19,7 +20,9 @@ import java.util.function.Predicate;
 
 public class NetherReactorBlockEntity extends BlockEntity implements Clearable {
 
-    private long lastActiveTime;
+    private ReactorActivityPhase activityPhase = ReactorActivityPhase.NONE;
+
+    private long activeTicks;
     private int forgeUses;
 
     public NetherReactorBlockEntity(BlockPos pos, BlockState state) {
@@ -29,27 +32,36 @@ public class NetherReactorBlockEntity extends BlockEntity implements Clearable {
     @Override
     protected void writeNbt(NbtCompound nbt) {
         super.writeNbt(nbt);
-        nbt.putLong("last_active_time", lastActiveTime);
+        nbt.putString("activity_phase", activityPhase.toString());
+        nbt.putLong("active_ticks", activeTicks);
         nbt.putInt("forge_uses", forgeUses);
     }
 
     @Override
     public void readNbt(NbtCompound nbt) {
         super.readNbt(nbt);
-        this.lastActiveTime = nbt.getLong("last_active_time");
+        this.activityPhase = ReactorActivityPhase.fromString(nbt.getString("activity_phase"));
+        this.activeTicks = nbt.getLong("active_ticks");
         this.forgeUses = nbt.getInt("forge_uses");
     }
 
     @Override
     public void clear() {
-        this.lastActiveTime = 0;
+        this.activityPhase = ReactorActivityPhase.NONE;
+        this.activeTicks = 0;
         this.forgeUses = 0;
     }
 
-    public long getElapsedTime() {
-        return this.world instanceof ServerWorld serverWorld && this.lastActiveTime > 0
-            ? serverWorld.getTime() - this.lastActiveTime
-            : 0L;
+    public ReactorActivityPhase getActivityPhase() {
+        return activityPhase;
+    }
+
+    public long getActiveTicks() {
+        return activeTicks;
+    }
+
+    public int getForgeUses() {
+        return forgeUses;
     }
 
     public void activate() {
@@ -58,7 +70,8 @@ public class NetherReactorBlockEntity extends BlockEntity implements Clearable {
             return;
         }
 
-        this.lastActiveTime = serverWorld.getTime();
+        this.activityPhase = ReactorActivityPhase.ACTIVATING;
+        this.activeTicks = 0;
         this.forgeUses = 0;
 
         long timeOfDay = serverWorld.getTimeOfDay();
@@ -81,7 +94,7 @@ public class NetherReactorBlockEntity extends BlockEntity implements Clearable {
             return ReactorForgeResult.INAPPLICABLE;
         }
 
-        if (this.forgeUses >= NRRGameRules.getIntOrDefault(NRRGameRules.MAX_FORGE_USES, serverWorld, 3)) {
+        if (this.forgeUses >= serverWorld.getGameRules().getInt(NRRGameRules.MAX_FORGE_USES)) {
             return ReactorForgeResult.MAX_USE_REACHED;
         }
 
@@ -93,13 +106,19 @@ public class NetherReactorBlockEntity extends BlockEntity implements Clearable {
 
     }
 
-    public static void tick(World world, BlockPos pos, BlockState state, NetherReactorBlockEntity blockEntity) {
+    public static void tick(World world, BlockPos pos, BlockState state, NetherReactorBlockEntity netherReactor) {
 
-        if (!(world instanceof ServerWorld serverWorld)) {
+        if (!(world instanceof ServerWorld serverWorld) || netherReactor.activityPhase == ReactorActivityPhase.NONE) {
             return;
         }
 
-        //  TODO: Implement activity phases
+        long activeSeconds = ++netherReactor.activeTicks / 20;
+        if (activeSeconds > 0 && activeSeconds % Math.max(1, serverWorld.getGameRules().getInt(NRRGameRules.ACTIVITY_DURATION)) == 0) {
+            world.setBlockState(pos, state.withIfExists(NetherReactorBlock.ACTIVATED, TriState.FALSE));
+            netherReactor.clear();
+        }
+
+        netherReactor.markDirty();
 
     }
 

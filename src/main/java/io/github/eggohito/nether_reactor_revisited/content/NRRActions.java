@@ -3,12 +3,8 @@ package io.github.eggohito.nether_reactor_revisited.content;
 import io.github.eggohito.nether_reactor_revisited.block.NetherReactorBlock;
 import io.github.eggohito.nether_reactor_revisited.block.entity.NetherReactorBlockEntity;
 import io.github.eggohito.nether_reactor_revisited.block.pattern.ReactorBlockPattern;
-import io.github.eggohito.nether_reactor_revisited.util.DirectionUtil;
-import io.github.eggohito.nether_reactor_revisited.util.ReactorForgeResult;
-import io.github.eggohito.nether_reactor_revisited.util.ReactorTriggerAction;
-import io.github.eggohito.nether_reactor_revisited.util.ReactorTriggerType;
+import io.github.eggohito.nether_reactor_revisited.util.*;
 import net.fabricmc.fabric.api.tag.convention.v1.ConventionalItemTags;
-import net.fabricmc.fabric.api.util.TriState;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
@@ -218,16 +214,18 @@ public class NRRActions {
 
     public static final ReactorTriggerAction QUERY_ACTIVE_REACTOR_TIME = (triggerType, netherReactor, state, world, pos, player, hand, hitResult) -> {
 
-        if (player.isSneaking()) {
-            //  FIXME: Remove when activity phases are implemented
-            world.setBlockState(pos, state.withIfExists(NetherReactorBlock.ACTIVATED, TriState.FALSE));
+        ReactorActivityPhase activityPhase = netherReactor.getActivityPhase();
+        if (activityPhase == ReactorActivityPhase.NONE) {
+            return ActionResult.CONSUME_PARTIAL;
         }
 
-        else {
-            player.sendMessage(Text
-                .translatable(triggerType.getBaseTranslationKey() + ".query.elapsed_active_time", netherReactor.getElapsedTime() / 20)
-                .formatted(Formatting.YELLOW), true);
-        }
+        String suffix = activityPhase == ReactorActivityPhase.UNSTABLE
+            ? ".query.remaining_unstable_time"
+            : ".query.elapsed_active_time";
+
+        player.sendMessage(Text
+            .translatable(triggerType.getBaseTranslationKey() + suffix, netherReactor.getActiveTicks() / 20)
+            .formatted(Formatting.YELLOW), true);
 
         return ActionResult.CONSUME_PARTIAL;
 

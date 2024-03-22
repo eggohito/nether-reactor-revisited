@@ -20,18 +20,15 @@ public class NRRGameRules {
         GameRules.Category.MISC, IntRuleAccessor.callCreate(3)
     );
 
+    public static final GameRules.Key<GameRules.IntRule> ACTIVITY_DURATION = GameRuleRegistry.register("nether-reactor-revisited:activityDuration",
+        GameRules.Category.MISC, IntRuleAccessor.callCreate(45)
+    );
+
     public static <T extends GameRules.Rule<T>> boolean getBooleanOrDefault(GameRules.Key<T> key, World world, boolean defaultValue) {
         T rule = world.getGameRules().get(key);
         return !(rule instanceof GameRules.BooleanRule booleanRule)
             ? defaultValue
             : booleanRule.get();
-    }
-
-    public static <T extends GameRules.Rule<T>> int getIntOrDefault(GameRules.Key<T> key, World world, int defaultValue) {
-        T rule = world.getGameRules().get(key);
-        return !(rule instanceof GameRules.IntRule intRule)
-            ? defaultValue
-            : intRule.get();
     }
 
     public static void registerAll() {
