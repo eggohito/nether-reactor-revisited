@@ -1,4 +1,4 @@
-package io.github.eggohito.nether_reactor_revisited.util;
+package io.github.eggohito.nether_reactor_revisited.reactor;
 
 import io.github.eggohito.nether_reactor_revisited.NetherReactorRevisited;
 import io.github.eggohito.nether_reactor_revisited.block.NetherReactorBlock;
@@ -19,7 +19,7 @@ import net.minecraft.util.math.BlockPos;
 import java.util.Arrays;
 import java.util.List;
 
-public enum ReactorTriggerType {
+public enum TriggerType {
 
     NORMAL(NetherReactorBlock.DEFAULT_STRUCTURE_PATTERN, "normal",
         NRRActions.HAS_REACTOR_STRUCTURE, NRRActions.IS_REACTOR_LEVEL_WITH_PLAYER, NRRActions.PLAYERS_TOO_FAR_AWAY,
@@ -30,7 +30,7 @@ public enum ReactorTriggerType {
         NRRActions.HAS_REACTOR_STRUCTURE, NRRActions.FORGE_HELL_LIGHTER, NRRActions.CAN_REACTIVATE,
         NRRActions.IS_REACTOR_LEVEL_WITH_PLAYER, NRRActions.PLAYERS_TOO_FAR_AWAY, NRRActions.ANOTHER_REACTOR_NEARBY);
 
-    public static ReactorTriggerType fromTriState(TriState triState) {
+    public static TriggerType fromTriState(TriState triState) {
         return switch (triState) {
             case DEFAULT ->
                 NORMAL;
@@ -41,18 +41,18 @@ public enum ReactorTriggerType {
         };
     }
 
-    final List<ReactorTriggerAction> actions;
+    final List<TriggerAction> actions;
 
     final ReactorBlockPattern structurePattern;
     final String baseTranslationKey;
 
-    ReactorTriggerType(ReactorBlockPattern structurePattern, String type, ReactorTriggerAction... actions) {
+    TriggerType(ReactorBlockPattern structurePattern, String type, TriggerAction... actions) {
         this.actions = Arrays.asList(actions);
         this.structurePattern = structurePattern;
         this.baseTranslationKey = Util.createTranslationKey("trigger", NetherReactorRevisited.id(type));
     }
 
-    public List<ReactorTriggerAction> getActions() {
+    public List<TriggerAction> getActions() {
         return actions;
     }
 
@@ -66,12 +66,12 @@ public enum ReactorTriggerType {
 
     public final ActionResult trigger(NetherReactorBlockEntity netherReactor, BlockState state, ServerWorld world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hitResult) {
 
-        for (ReactorTriggerAction action : this.getActions()) {
+        for (TriggerAction action : this.getActions()) {
 
             ActionResult result = action.accept(this, netherReactor, state, world, pos, player, hand, hitResult);
 
-            if (!result.shouldIncrementStat()) {
-                return result;
+            if (result != ActionResult.PASS && !result.isAccepted()) {
+                return ActionResult.CONSUME_PARTIAL;
             }
 
         }
@@ -79,7 +79,7 @@ public enum ReactorTriggerType {
         netherReactor.activate();
         world.getServer().getPlayerManager().broadcast(Text
             .translatable(this.getBaseTranslationKey() + ".success", player.getName())
-            .setStyle(ReactorTriggerAction.SUCCESS_STYLE), false);
+            .setStyle(TriggerAction.SUCCESS_STYLE), false);
 
         return ActionResult.SUCCESS;
 

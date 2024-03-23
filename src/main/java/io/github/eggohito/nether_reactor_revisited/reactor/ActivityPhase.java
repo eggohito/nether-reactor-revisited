@@ -1,8 +1,8 @@
-package io.github.eggohito.nether_reactor_revisited.util;
+package io.github.eggohito.nether_reactor_revisited.reactor;
 
 import java.util.Locale;
 
-public enum ReactorActivityPhase {
+public enum ActivityPhase {
 
     NONE,
     ACTIVATING,
@@ -10,7 +10,7 @@ public enum ReactorActivityPhase {
     UNSTABLE,
     DEACTIVATING;
 
-    public static ReactorActivityPhase fromString(String value) {
+    public static ActivityPhase fromString(String value) {
         return switch (value.toLowerCase(Locale.ROOT)) {
             case "activating" ->
                 ACTIVATING;

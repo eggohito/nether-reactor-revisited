@@ -4,8 +4,8 @@ import io.github.eggohito.nether_reactor_revisited.block.NetherReactorBlock;
 import io.github.eggohito.nether_reactor_revisited.content.NRRBlockEntities;
 import io.github.eggohito.nether_reactor_revisited.content.NRREnchantments;
 import io.github.eggohito.nether_reactor_revisited.content.NRRGameRules;
-import io.github.eggohito.nether_reactor_revisited.util.ReactorActivityPhase;
-import io.github.eggohito.nether_reactor_revisited.util.ReactorForgeResult;
+import io.github.eggohito.nether_reactor_revisited.reactor.ActivityPhase;
+import io.github.eggohito.nether_reactor_revisited.reactor.ForgeResult;
 import net.fabricmc.fabric.api.util.TriState;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
@@ -20,7 +20,7 @@ import java.util.function.Predicate;
 
 public class NetherReactorBlockEntity extends BlockEntity implements Clearable {
 
-    private ReactorActivityPhase activityPhase = ReactorActivityPhase.NONE;
+    private ActivityPhase activityPhase = ActivityPhase.NONE;
 
     private long activeTicks;
     private int forgeUses;
@@ -40,19 +40,19 @@ public class NetherReactorBlockEntity extends BlockEntity implements Clearable {
     @Override
     public void readNbt(NbtCompound nbt) {
         super.readNbt(nbt);
-        this.activityPhase = ReactorActivityPhase.fromString(nbt.getString("activity_phase"));
+        this.activityPhase = ActivityPhase.fromString(nbt.getString("activity_phase"));
         this.activeTicks = nbt.getLong("active_ticks");
         this.forgeUses = nbt.getInt("forge_uses");
     }
 
     @Override
     public void clear() {
-        this.activityPhase = ReactorActivityPhase.NONE;
+        this.activityPhase = ActivityPhase.NONE;
         this.activeTicks = 0;
         this.forgeUses = 0;
     }
 
-    public ReactorActivityPhase getActivityPhase() {
+    public ActivityPhase getActivityPhase() {
         return activityPhase;
     }
 
@@ -70,7 +70,7 @@ public class NetherReactorBlockEntity extends BlockEntity implements Clearable {
             return;
         }
 
-        this.activityPhase = ReactorActivityPhase.ACTIVATING;
+        this.activityPhase = ActivityPhase.ACTIVATING;
         this.activeTicks = 0;
         this.forgeUses = 0;
 
@@ -84,31 +84,31 @@ public class NetherReactorBlockEntity extends BlockEntity implements Clearable {
 
     }
 
-    public ReactorForgeResult forgeItem(ItemStack stack, Predicate<ItemStack> applicableCondition) {
+    public ForgeResult forgeItem(ItemStack stack, Predicate<ItemStack> applicableCondition) {
 
         if (!(this.getWorld() instanceof ServerWorld serverWorld)) {
-            return ReactorForgeResult.FAIL;
+            return ForgeResult.FAIL;
         }
 
         if (!applicableCondition.test(stack)) {
-            return ReactorForgeResult.INAPPLICABLE;
+            return ForgeResult.INAPPLICABLE;
         }
 
         if (this.forgeUses >= serverWorld.getGameRules().getInt(NRRGameRules.MAX_FORGE_USES)) {
-            return ReactorForgeResult.MAX_USE_REACHED;
+            return ForgeResult.MAX_USE_REACHED;
         }
 
         stack.addEnchantment(NRREnchantments.HELL_LIGHTER, 1);
         this.forgeUses++;
 
         this.markDirty();
-        return ReactorForgeResult.SUCCESS;
+        return ForgeResult.SUCCESS;
 
     }
 
     public static void tick(World world, BlockPos pos, BlockState state, NetherReactorBlockEntity netherReactor) {
 
-        if (!(world instanceof ServerWorld serverWorld) || netherReactor.activityPhase == ReactorActivityPhase.NONE) {
+        if (!(world instanceof ServerWorld serverWorld) || netherReactor.activityPhase == ActivityPhase.NONE) {
             return;
         }
 

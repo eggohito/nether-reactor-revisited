@@ -12,7 +12,7 @@ import io.github.eggohito.nether_reactor_revisited.block.pattern.ReactorBlockPat
 import io.github.eggohito.nether_reactor_revisited.content.NRRBlockEntities;
 import io.github.eggohito.nether_reactor_revisited.content.NRRBlockTags;
 import io.github.eggohito.nether_reactor_revisited.state.property.TriStateProperty;
-import io.github.eggohito.nether_reactor_revisited.util.ReactorTriggerType;
+import io.github.eggohito.nether_reactor_revisited.reactor.TriggerType;
 import net.fabricmc.fabric.api.util.TriState;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -74,7 +74,7 @@ public class NetherReactorBlock extends BlockWithEntity implements PolymerTextur
         }
 
         return state.getOrEmpty(ACTIVATED)
-            .map(triState -> ReactorTriggerType
+            .map(triState -> TriggerType
                 .fromTriState(triState)
                 .trigger(netherReactor, state, serverWorld, pos, player, hand, hitResult))
             .orElse(ActionResult.PASS);

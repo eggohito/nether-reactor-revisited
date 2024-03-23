@@ -1,10 +1,10 @@
-package io.github.eggohito.nether_reactor_revisited.util;
+package io.github.eggohito.nether_reactor_revisited.reactor;
 
 import io.github.eggohito.nether_reactor_revisited.NetherReactorRevisited;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Util;
 
-public enum ReactorForgeResult {
+public enum ForgeResult {
 
     FAIL("fail", Formatting.RED),
     SUCCESS("success", Formatting.GREEN),
@@ -16,7 +16,7 @@ public enum ReactorForgeResult {
 
     private final Formatting formatting;
 
-    ReactorForgeResult(String name, Formatting formatting) {
+    ForgeResult(String name, Formatting formatting) {
         this.name = name;
         this.translationKey = Util.createTranslationKey("trigger", NetherReactorRevisited.id("forge_item/" + name));
         this.formatting = formatting;

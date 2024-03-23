@@ -3,6 +3,10 @@ package io.github.eggohito.nether_reactor_revisited.content;
 import io.github.eggohito.nether_reactor_revisited.block.NetherReactorBlock;
 import io.github.eggohito.nether_reactor_revisited.block.entity.NetherReactorBlockEntity;
 import io.github.eggohito.nether_reactor_revisited.block.pattern.ReactorBlockPattern;
+import io.github.eggohito.nether_reactor_revisited.reactor.ActivityPhase;
+import io.github.eggohito.nether_reactor_revisited.reactor.ForgeResult;
+import io.github.eggohito.nether_reactor_revisited.reactor.TriggerAction;
+import io.github.eggohito.nether_reactor_revisited.reactor.TriggerType;
 import io.github.eggohito.nether_reactor_revisited.util.*;
 import net.fabricmc.fabric.api.tag.convention.v1.ConventionalItemTags;
 import net.minecraft.block.BlockState;
@@ -24,7 +28,7 @@ import java.util.Set;
 
 public class NRRActions {
 
-    public static final ReactorTriggerAction IS_REACTOR_LEVEL_WITH_PLAYER = (triggerType, netherReactor, state, world, pos, player, hand, hitResult) -> {
+    public static final TriggerAction IS_REACTOR_LEVEL_WITH_PLAYER = (triggerType, netherReactor, state, world, pos, player, hand, hitResult) -> {
 
         if (player.getBlockY() == pos.down().getY()) {
             return ActionResult.SUCCESS;
@@ -32,12 +36,12 @@ public class NRRActions {
 
         player.sendMessage(Text
             .translatable(triggerType.getBaseTranslationKey() + ".fail.different_y_level")
-            .setStyle(ReactorTriggerAction.ERROR_STYLE), true);
-        return ActionResult.CONSUME_PARTIAL;
+            .setStyle(TriggerAction.ERROR_STYLE), true);
+        return ActionResult.FAIL;
 
     };
 
-    public static final ReactorTriggerAction ANOTHER_REACTOR_NEARBY = (triggerType, netherReactor, state, world, pos, player, hand, hitResult) -> {
+    public static final TriggerAction ANOTHER_REACTOR_NEARBY = (triggerType, netherReactor, state, world, pos, player, hand, hitResult) -> {
 
         long nearbyReactorCores = 0;
         for (BlockPos nearbyPos : BlockPos.iterateOutwards(pos, 32, 32, 32)) {
@@ -48,8 +52,8 @@ public class NRRActions {
 
             player.sendMessage(Text
                 .translatable(triggerType.getBaseTranslationKey() + ".fail.nearby_cores")
-                .setStyle(ReactorTriggerAction.ERROR_STYLE), true);
-            return ActionResult.CONSUME_PARTIAL;
+                .setStyle(TriggerAction.ERROR_STYLE), true);
+            return ActionResult.FAIL;
 
         }
 
@@ -57,10 +61,10 @@ public class NRRActions {
 
     };
 
-    public static final ReactorTriggerAction HAS_REACTOR_STRUCTURE = new ReactorTriggerAction() {
+    public static final TriggerAction HAS_REACTOR_STRUCTURE = new TriggerAction() {
 
         @Override
-        public ActionResult accept(ReactorTriggerType triggerType, NetherReactorBlockEntity netherReactor, BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hitResult) {
+        public ActionResult accept(TriggerType triggerType, NetherReactorBlockEntity netherReactor, BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hitResult) {
 
             Direction facingDirection = player.getHorizontalFacing();
             Direction oppositeFacingDirection = facingDirection.getOpposite();
@@ -101,7 +105,7 @@ public class NRRActions {
             player.sendMessage(Text
                 .translatable(triggerType.getBaseTranslationKey() + ".fail.side_mismatch", mismatchSideText)
                 .styled(style -> style.withColor(Formatting.RED)), true);
-            return ActionResult.CONSUME_PARTIAL;
+            return ActionResult.FAIL;
 
         }
 
@@ -148,7 +152,7 @@ public class NRRActions {
 
     };
 
-    public static final ReactorTriggerAction PLAYERS_TOO_FAR_AWAY = (triggerType, netherReactor, state, world, pos, player, hand, hitResult) -> {
+    public static final TriggerAction PLAYERS_TOO_FAR_AWAY = (triggerType, netherReactor, state, world, pos, player, hand, hitResult) -> {
 
         Vec3d centerPos = pos.toCenterPos();
         int farAwayPlayers = world
@@ -161,14 +165,14 @@ public class NRRActions {
 
         player.sendMessage(Text
             .translatable(triggerType.getBaseTranslationKey() + ".fail.players_too_far_away", farAwayPlayers)
-            .setStyle(ReactorTriggerAction.ERROR_STYLE), true);
-        return ActionResult.CONSUME_PARTIAL;
+            .setStyle(TriggerAction.ERROR_STYLE), true);
+        return ActionResult.FAIL;
 
     };
 
-    public static final ReactorTriggerAction CAN_REACTIVATE = (triggerType, netherReactor, state, world, pos, player, hand, hitResult) -> {
+    public static final TriggerAction CAN_REACTIVATE = (triggerType, netherReactor, state, world, pos, player, hand, hitResult) -> {
 
-        if (triggerType == ReactorTriggerType.NORMAL) {
+        if (triggerType == TriggerType.NORMAL) {
             return ActionResult.SUCCESS;
         }
 
@@ -185,41 +189,41 @@ public class NRRActions {
 
         player.sendMessage(Text
             .translatable(triggerType.getBaseTranslationKey() + ".fail.unmet_requirements")
-            .setStyle(ReactorTriggerAction.ERROR_STYLE), true);
+            .setStyle(TriggerAction.ERROR_STYLE), true);
 
-        return ActionResult.CONSUME_PARTIAL;
+        return ActionResult.FAIL;
 
     };
 
-    public static final ReactorTriggerAction FORGE_HELL_LIGHTER = (triggerType, netherReactor, state, world, pos, player, hand, hitResult) -> {
+    public static final TriggerAction FORGE_HELL_LIGHTER = (triggerType, netherReactor, state, world, pos, player, hand, hitResult) -> {
 
-        if (triggerType == ReactorTriggerType.NORMAL) {
-            return ActionResult.SUCCESS;
+        if (triggerType != TriggerType.DEACTIVATED) {
+            return ActionResult.PASS;
         }
 
         ItemStack stackInHand = player.getStackInHand(hand);
-        ReactorForgeResult result = netherReactor.forgeItem(stackInHand, NRREnchantments::canApplyHellLighter);
+        ForgeResult result = netherReactor.forgeItem(stackInHand, NRREnchantments::canApplyHellLighter);
 
-        if (result == ReactorForgeResult.INAPPLICABLE) {
-            return ActionResult.SUCCESS;
+        if (result == ForgeResult.INAPPLICABLE) {
+            return ActionResult.PASS;
         }
 
         player.sendMessage(Text
             .translatable(result.getTranslationKey(), stackInHand.getName())
             .formatted(result.getFormatting()), true);
 
-        return ActionResult.CONSUME_PARTIAL;
+        return ActionResult.FAIL;
 
     };
 
-    public static final ReactorTriggerAction QUERY_ACTIVE_REACTOR_TIME = (triggerType, netherReactor, state, world, pos, player, hand, hitResult) -> {
+    public static final TriggerAction QUERY_ACTIVE_REACTOR_TIME = (triggerType, netherReactor, state, world, pos, player, hand, hitResult) -> {
 
-        ReactorActivityPhase activityPhase = netherReactor.getActivityPhase();
-        if (activityPhase == ReactorActivityPhase.NONE) {
-            return ActionResult.CONSUME_PARTIAL;
+        ActivityPhase activityPhase = netherReactor.getActivityPhase();
+        if (activityPhase == ActivityPhase.NONE) {
+            return ActionResult.FAIL;
         }
 
-        String suffix = activityPhase == ReactorActivityPhase.UNSTABLE
+        String suffix = activityPhase == ActivityPhase.UNSTABLE
             ? ".query.remaining_unstable_time"
             : ".query.elapsed_active_time";
 
@@ -227,7 +231,7 @@ public class NRRActions {
             .translatable(triggerType.getBaseTranslationKey() + suffix, netherReactor.getActiveTicks() / 20)
             .formatted(Formatting.YELLOW), true);
 
-        return ActionResult.CONSUME_PARTIAL;
+        return ActionResult.PASS;
 
     };
 
