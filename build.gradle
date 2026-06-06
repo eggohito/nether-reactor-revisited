@@ -7,18 +7,26 @@ version = project.mod_version
 group = project.maven_group
 
 repositories {
+
 	// Add repositories to retrieve artifacts from in here.
 	// You should only use this when depending on other mods because
 	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
 	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
 	// for more information about repositories.
+	maven {
+		name = "Nucleoid"
+		url = "https://maven.nucleoid.xyz"
+	}
+
 }
 
 loom {
+
 	splitEnvironmentSourceSets()
+	accessWidenerPath = file("src/main/resources/nether-reactor-revisited.classtweaker")
 
 	mods {
-		"modid" {
+		"nether-reactor-revisited" {
 			sourceSet sourceSets.main
 			sourceSet sourceSets.client
 		}
@@ -27,50 +35,68 @@ loom {
 }
 
 dependencies {
+
 	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	
+
 	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
-	
+
+	//	Polymer API
+	include(implementation("eu.pb4:polymer-core:${project.polymer_version}"))
+
 }
 
 processResources {
-	def version = project.version
-	inputs.property "version", version
 
 	filesMatching("fabric.mod.json") {
-		expand "version": version
+
+		var props = [
+		    "version": project.version,
+			"loader": loader_version,
+			"minecraft": minecraft_version,
+			"fabric": fabric_api_version,
+			"java": java_version
+		]
+
+		expand props
+
 	}
+
 }
 
 tasks.withType(JavaCompile).configureEach {
-	it.options.release = 25
+	it.options.release = Integer.parseInt(java_version)
 }
 
 java {
+
 	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
 	// if it is present.
 	// If you remove this line, sources will not be generated.
 	withSourcesJar()
 
-	sourceCompatibility = JavaVersion.VERSION_25
-	targetCompatibility = JavaVersion.VERSION_25
+	sourceCompatibility = JavaVersion.toVersion(java_version)
+	targetCompatibility = JavaVersion.toVersion(java_version)
+
 }
 
 jar {
+
 	def projectName = project.name
 	inputs.property "projectName", projectName
 
 	from("LICENSE") {
 		rename { "${it}_$projectName"}
 	}
+
 }
 
 // configure the maven publication
 publishing {
+
 	publications {
 		create("mavenJava", MavenPublication) {
 			from components.java
@@ -84,4 +110,5 @@ publishing {
 		// The repositories here will be used for publishing your artifact, not for
 		// retrieving dependencies.
 	}
+
 }

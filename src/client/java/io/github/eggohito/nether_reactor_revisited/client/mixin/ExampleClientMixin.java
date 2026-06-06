@@ -1,4 +1,4 @@
-package com.example.client.mixin;
+package io.github.eggohito.nether_reactor_revisited.client.mixin;
 
 import net.minecraft.client.Minecraft;
 import org.spongepowered.asm.mixin.Mixin;
