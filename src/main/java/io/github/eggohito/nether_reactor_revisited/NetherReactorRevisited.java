@@ -1,26 +1,30 @@
 package io.github.eggohito.nether_reactor_revisited;
 
+import io.github.eggohito.nether_reactor_revisited.content.NRRBlocks;
+import io.github.eggohito.nether_reactor_revisited.content.NRRItems;
 import net.fabricmc.api.ModInitializer;
 
+import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class NetherReactorRevisited implements ModInitializer {
 
 	public static final String MOD_NAMESPACE = "nether-reactor-revisited";
-
-	// This logger is used to write text to the console and the log file.
-	// It is considered best practice to use your mod id as the logger's name.
-	// That way, it's clear which mod wrote info, warnings, and errors.
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_NAMESPACE);
 
 	@Override
 	public void onInitialize() {
-		// This code runs as soon as Minecraft is in a mod-load-ready state.
-		// However, some things (like resources) may still be uninitialized.
-		// Proceed with mild caution.
 
-		LOGGER.info("Hello Fabric world!");
+		LOGGER.info("Nether Reactor: Revisited is initializing.");
+
+		NRRBlocks.registerAll();
+		NRRItems.registerAll();
+
+	}
+
+	public static Identifier id(String path) {
+		return Identifier.fromNamespaceAndPath(MOD_NAMESPACE, path);
 	}
 
 }

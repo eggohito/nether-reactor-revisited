@@ -3,7 +3,7 @@
 	"package": "io.github.eggohito.nether_reactor_revisited.mixin",
 	"compatibilityLevel": "JAVA_25",
 	"mixins": [
-		"ExampleMixin"
+
 	],
 	"injectors": {
 		"defaultRequire": 1

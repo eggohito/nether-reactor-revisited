@@ -1,0 +1,8 @@
+{
+	"item.nether-reactor-revisited.reactor_core": "Reactor Core",
+	"item.nether-reactor-revisited.reactor_core.state": "Core state: %s",
+	"block.nether-reactor-revisited.reactor_core": "Reactor Core",
+	"states.nether-reactor-revisited.reactor_core.activated": "ACTIVATED",
+	"states.nether-reactor-revisited.reactor_core.deactivated": "DEACTIVATED",
+	"states.nether-reactor-revisited.reactor_core.normal": "NORMAL"
+}
