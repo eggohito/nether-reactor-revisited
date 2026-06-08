@@ -1,0 +1,27 @@
+{
+	"model": {
+		"type": "minecraft:select",
+		"property": "minecraft:block_state",
+		"block_state_property": "state",
+		"cases": [
+			{
+				"when": "activated",
+				"model": {
+					"type": "minecraft:model",
+					"model": "nether-reactor-revisited:block/reactor_core/activated"
+				}
+			},
+			{
+				"when": "deactivated",
+				"model": {
+					"type": "minecraft:model",
+					"model": "nether-reactor-revisited:block/reactor_core/deactivated"
+				}
+			}
+		],
+		"fallback": {
+			"type": "minecraft:model",
+			"model": "nether-reactor-revisited:block/reactor_core"
+		}
+	}
+}

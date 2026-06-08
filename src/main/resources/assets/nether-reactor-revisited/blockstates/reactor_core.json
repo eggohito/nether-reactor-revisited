@@ -1,0 +1,13 @@
+{
+	"variants": {
+		"state=normal": {
+			"model": "nether-reactor-revisited:block/reactor_core/normal"
+		},
+		"state=activated": {
+			"model": "nether-reactor-revisited:block/reactor_core/activated"
+		},
+		"state=deactivated": {
+			"model": "nether-reactor-revisited:block/reactor_core/deactivated"
+		}
+	}
+}
