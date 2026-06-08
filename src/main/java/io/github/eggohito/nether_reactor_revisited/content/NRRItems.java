@@ -10,11 +10,17 @@ import net.minecraft.world.item.Items;
 import java.util.function.Function;
 
 @SuppressWarnings("unused")
-public class NRRItems {
+public final class NRRItems {
 
-	public static final Item REACTOR_CORE = register(
-		"reactor_core",
-		properties -> new BlockItem(NRRBlocks.REACTOR_CORE, properties),
+	public static final Item REACTOR_CORE = Items.registerBlock(
+		NRRBlocks.REACTOR_CORE,
+		BlockItem::new,
+		new Item.Properties()
+	);
+
+	public static final Item GLOWING_OBSIDIAN = Items.registerBlock(
+		NRRBlocks.GLOWING_OBSIDIAN,
+		BlockItem::new,
 		new Item.Properties()
 	);
 
