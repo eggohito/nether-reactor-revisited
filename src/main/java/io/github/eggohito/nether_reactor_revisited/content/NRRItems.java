@@ -1,19 +1,20 @@
 package io.github.eggohito.nether_reactor_revisited.content;
 
 import io.github.eggohito.nether_reactor_revisited.NetherReactorRevisited;
-import io.github.eggohito.nether_reactor_revisited.item.ReactorCoreItem;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 
 import java.util.function.Function;
 
+@SuppressWarnings("unused")
 public class NRRItems {
 
 	public static final Item REACTOR_CORE = register(
 		"reactor_core",
-		properties -> new ReactorCoreItem(NRRBlocks.REACTOR_CORE, properties),
+		properties -> new BlockItem(NRRBlocks.REACTOR_CORE, properties),
 		new Item.Properties()
 	);
 
