@@ -16,7 +16,7 @@ public enum CoreState implements StringRepresentable {
 
 	CoreState(String name, ChatFormatting formatting) {
 		this.name = name;
-		this.tooltipComponent = Component.translatable("states.nether-reactor-revisited.reactor_core." + name).withStyle(formatting);
+		this.tooltipComponent = Component.translatable("nether-reactor-revisited.reactor_core.state." + name).withStyle(formatting);
 	}
 
 	@Override

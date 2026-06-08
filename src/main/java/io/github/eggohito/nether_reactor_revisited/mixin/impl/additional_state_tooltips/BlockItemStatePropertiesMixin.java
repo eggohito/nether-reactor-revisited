@@ -31,7 +31,7 @@ public abstract class BlockItemStatePropertiesMixin {
 		CoreState coreState = this.get(ReactorCoreBlock.STATE);
 
 		if (coreState != null) {
-			consumer.accept(Component.translatable("item.nether-reactor-revisited.reactor_core.state", coreState.getTooltipComponent().copy().withStyle(ChatFormatting.BOLD)).withStyle(ChatFormatting.GRAY));
+			consumer.accept(Component.translatable("nether-reactor-revisited.reactor_core.state.tooltip", coreState.getTooltipComponent().copy().withStyle(ChatFormatting.BOLD)).withStyle(ChatFormatting.GRAY));
 		}
 
 	}
