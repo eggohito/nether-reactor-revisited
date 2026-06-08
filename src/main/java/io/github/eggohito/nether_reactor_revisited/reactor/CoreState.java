@@ -1,4 +1,4 @@
-package io.github.eggohito.nether_reactor_revisited.reactor.core;
+package io.github.eggohito.nether_reactor_revisited.reactor;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;

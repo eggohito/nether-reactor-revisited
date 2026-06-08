@@ -3,7 +3,8 @@
 	"package": "io.github.eggohito.nether_reactor_revisited.mixin",
 	"compatibilityLevel": "JAVA_25",
 	"mixins": [
-		"impl.additional_state_tooltips.BlockItemStatePropertiesMixin"
+		"access.BlockPatternBuilderAccessor",
+		"impl.core_tooltip.BlockItemStatePropertiesMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

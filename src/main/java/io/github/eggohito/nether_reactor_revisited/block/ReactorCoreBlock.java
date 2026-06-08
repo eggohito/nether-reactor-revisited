@@ -1,19 +1,12 @@
 package io.github.eggohito.nether_reactor_revisited.block;
 
 import com.mojang.serialization.MapCodec;
-import io.github.eggohito.nether_reactor_revisited.reactor.core.CoreState;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
+import io.github.eggohito.nether_reactor_revisited.reactor.CoreState;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.block.state.properties.Property;
-import net.minecraft.world.phys.BlockHitResult;
 import org.jspecify.annotations.NonNull;
 
 public class ReactorCoreBlock extends Block {
@@ -34,16 +27,6 @@ public class ReactorCoreBlock extends Block {
 	@Override
 	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
 		builder.add(STATE);
-	}
-
-	@Override
-	protected @NonNull InteractionResult useItemOn(@NonNull ItemStack itemStack, @NonNull BlockState state, @NonNull Level level, @NonNull BlockPos pos, @NonNull Player player, @NonNull InteractionHand hand, @NonNull BlockHitResult hitResult) {
-		return super.useItemOn(itemStack, state, level, pos, player, hand, hitResult);
-	}
-
-	@Override
-	protected @NonNull InteractionResult useWithoutItem(@NonNull BlockState state, @NonNull Level level, @NonNull BlockPos pos, @NonNull Player player, @NonNull BlockHitResult hitResult) {
-		return super.useWithoutItem(state, level, pos, player, hitResult);
 	}
 
 }

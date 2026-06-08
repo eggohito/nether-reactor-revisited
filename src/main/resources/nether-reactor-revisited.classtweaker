@@ -1,3 +1,4 @@
 classTweaker v2 official
 accessible method net/minecraft/world/item/Items registerItem (Lnet/minecraft/resources/ResourceKey;Ljava/util/function/Function;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
 accessible method net/minecraft/world/item/Items registerBlock (Lnet/minecraft/world/level/block/Block;Ljava/util/function/BiFunction;Lnet/minecraft/world/item/Item$Properties;)Lnet/minecraft/world/item/Item;
+accessible method net/minecraft/world/level/block/state/pattern/BlockPatternBuilder <init> ()V
