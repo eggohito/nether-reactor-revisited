@@ -22,7 +22,7 @@ public final class CorePatterns {
 		.aisle("###", "~ ~", "###")
 		.aisle(" # ", "#~#", " # ")
 		.where('~', BlockInWorld.hasState(BlockBehaviour.BlockStateBase::isAir))
-		.where('#', BlockInWorld.hasState(state -> state.is(NRRBlocks.GLOWING_OBSIDIAN)))
+		.where('#', BlockInWorld.hasState(state -> state.is(NRRBlocks.GLOWING_OBSIDIAN) || state.is(Blocks.COBBLESTONE) || state.is(Blocks.OBSIDIAN)))
 		.build();
 
 	public static final FailableBlockPattern DEACTIVATED = FailableBlockPattern.builder()
