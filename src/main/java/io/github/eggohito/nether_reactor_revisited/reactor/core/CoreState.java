@@ -1,5 +1,6 @@
-package io.github.eggohito.nether_reactor_revisited.reactor;
+package io.github.eggohito.nether_reactor_revisited.reactor.core;
 
+import io.github.eggohito.nether_reactor_revisited.reactor.ReactorPhase;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.StringRepresentable;
@@ -26,6 +27,15 @@ public enum CoreState implements StringRepresentable {
 
 	public Component getTooltipComponent() {
 		return tooltipComponent;
+	}
+
+	public ReactorPhase asPhase() {
+		return switch (this) {
+			case NORMAL, DEACTIVATED ->
+				ReactorPhase.NONE;
+			case ACTIVATED ->
+				ReactorPhase.UNSTABLE;
+		};
 	}
 
 }

@@ -3,6 +3,7 @@ package io.github.eggohito.nether_reactor_revisited.content;
 import io.github.eggohito.nether_reactor_revisited.NetherReactorRevisited;
 import io.github.eggohito.nether_reactor_revisited.block.GlowingObsidianBlock;
 import io.github.eggohito.nether_reactor_revisited.block.ReactorCoreBlock;
+import io.github.eggohito.nether_reactor_revisited.reactor.core.CoreState;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.block.Block;
@@ -20,7 +21,8 @@ public final class NRRBlocks {
 		"reactor_core",
 		ReactorCoreBlock::new,
 		BlockBehaviour.Properties.of()
-			.destroyTime(3.5F)
+			.strength(3.0F)
+			.lightLevel(state -> state.getValue(ReactorCoreBlock.STATE) == CoreState.ACTIVATED ? 2 : 0)
 			.sound(SoundType.METAL)
 			.requiresCorrectToolForDrops()
 	);
@@ -29,11 +31,11 @@ public final class NRRBlocks {
 		"glowing_obsidian",
 		GlowingObsidianBlock::new,
 		BlockBehaviour.Properties.of()
+			.strength(35.0F, 1200.0F)
+			.lightLevel(ignored -> 12)
 			.mapColor(MapColor.COLOR_BLACK)
 			.instrument(NoteBlockInstrument.BASEDRUM)
 			.requiresCorrectToolForDrops()
-			.strength(35.0F, 1200.0F)
-			.lightLevel(ignored -> 12)
 	);
 
 	public static void registerAll() {

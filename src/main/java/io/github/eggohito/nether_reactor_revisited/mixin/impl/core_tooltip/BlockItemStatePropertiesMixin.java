@@ -1,7 +1,7 @@
 package io.github.eggohito.nether_reactor_revisited.mixin.impl.core_tooltip;
 
 import io.github.eggohito.nether_reactor_revisited.block.ReactorCoreBlock;
-import io.github.eggohito.nether_reactor_revisited.reactor.CoreState;
+import io.github.eggohito.nether_reactor_revisited.reactor.core.CoreState;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.component.DataComponentGetter;
 import net.minecraft.network.chat.Component;
