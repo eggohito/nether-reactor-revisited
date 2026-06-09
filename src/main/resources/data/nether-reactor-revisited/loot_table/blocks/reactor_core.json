@@ -1,0 +1,63 @@
+{
+	"type": "minecraft:block",
+	"pools": [
+		{
+			"rolls": 1.0,
+			"bonus_rolls": 0.0,
+			"random_sequence": "nether-reactor-revisited:blocks/reactor_core",
+			"entries": [
+				{
+					"type": "minecraft:alternatives",
+					"children": [
+						{
+							"type": "minecraft:item",
+							"name": "nether-reactor-revisited:reactor_core",
+							"conditions": [
+								{
+									"condition": "minecraft:match_tool",
+									"predicate": {
+										"predicates": {
+											"minecraft:enchantments": [
+												{
+													"enchantments": "minecraft:silk_touch",
+													"levels": {
+														"min": 1
+													}
+												}
+											]
+										}
+									}
+								}
+							],
+							"functions": [
+								{
+									"function": "minecraft:copy_components",
+									"source": "block_entity",
+									"include": [
+										"minecraft:custom_name"
+									]
+								},
+								{
+									"function": "minecraft:copy_state",
+									"block": "nether-reactor-revisited:reactor_core",
+									"properties": [
+										"state"
+									]
+								}
+							]
+						},
+						{
+							"type": "minecraft:loot_table",
+							"value": "nether-reactor-revisited:blocks/reactor_core/disassembled",
+							"conditions": [
+								{
+									"condition": "minecraft:survives_explosion"
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}
