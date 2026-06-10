@@ -3,11 +3,13 @@ package io.github.eggohito.nether_reactor_revisited.block.entity;
 import com.google.common.cache.LoadingCache;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.eggohito.nether_reactor_revisited.NetherReactorRevisited;
 import io.github.eggohito.nether_reactor_revisited.block.ReactorCoreBlock;
 import io.github.eggohito.nether_reactor_revisited.content.NRRBlockEntities;
 import io.github.eggohito.nether_reactor_revisited.content.NRRBlockTags;
 import io.github.eggohito.nether_reactor_revisited.content.NRRBlocks;
 import io.github.eggohito.nether_reactor_revisited.content.NRRGameRules;
+import io.github.eggohito.nether_reactor_revisited.levelgen.BlockTransformProcessor;
 import io.github.eggohito.nether_reactor_revisited.mixin.access.BlockPatternAccessor;
 import io.github.eggohito.nether_reactor_revisited.mixin.access.BlockPatternMatchAccessor;
 import io.github.eggohito.nether_reactor_revisited.reactor.ReactorPhase;
@@ -15,11 +17,14 @@ import io.github.eggohito.nether_reactor_revisited.reactor.core.CoreState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.clock.ClockTimeMarkers;
 import net.minecraft.world.clock.ServerClockManager;
 import net.minecraft.world.level.Level;
@@ -29,14 +34,19 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.pattern.BlockInWorld;
 import net.minecraft.world.level.block.state.pattern.BlockPattern;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.Nullable;
 
+import java.util.OptionalDouble;
 import java.util.function.Predicate;
 
 public class ReactorCoreBlockEntity extends BlockEntity {
+
+	private static final Identifier STRUCTURE_ID = NetherReactorRevisited.id("spire");
 
 	private Status status = Status.NORMAL;
 	private int step = 0;
@@ -92,7 +102,7 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 
 	public void trigger() {
 
-		if (!(this.getLevel() instanceof ServerLevel serverLevel)) {
+		if (!(this.getLevel() instanceof ServerLevel serverLevel) || !this.placeSpire(serverLevel, OptionalDouble.empty())) {
 			return;
 		}
 
@@ -105,6 +115,24 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 			.ifPresent(clock -> clockManager.moveToTimeMarker(clock, ClockTimeMarkers.MIDNIGHT));
 
 		this.setChanged();
+
+	}
+
+	protected boolean placeSpire(ServerLevel level, OptionalDouble chance) {
+
+		StructureTemplate template = level.getStructureManager().get(STRUCTURE_ID).orElse(null);
+		if (template == null) {
+			return false;
+		}
+
+		Vec3i size = template.getSize();
+		BlockPos centeredPos = this.getBlockPos().offset(-size.getX() / 2, -2, -size.getZ() / 2);
+
+		RandomSource random = level.getRandom();
+		StructurePlaceSettings placeSettings = new StructurePlaceSettings();
+
+		chance.ifPresent(_chance -> placeSettings.clearProcessors().addProcessor(new BlockTransformProcessor((float) _chance)).setRandom(random));
+		return template.placeInWorld(level, centeredPos, centeredPos, placeSettings, random, Block.UPDATE_CLIENTS);
 
 	}
 
@@ -249,6 +277,7 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 						changed = true;
 
 						if (entity.getStep() >= pattern.getHeight()) {
+							entity.placeSpire(serverLevel, OptionalDouble.of(0.75));
 							entity.changePhase(ReactorPhase.DEACTIVATED);
 						}
 
