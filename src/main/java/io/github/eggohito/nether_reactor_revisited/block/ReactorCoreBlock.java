@@ -3,6 +3,7 @@ package io.github.eggohito.nether_reactor_revisited.block;
 import com.mojang.serialization.MapCodec;
 import io.github.eggohito.nether_reactor_revisited.block.entity.ReactorCoreBlockEntity;
 import io.github.eggohito.nether_reactor_revisited.content.NRRBlockEntities;
+import io.github.eggohito.nether_reactor_revisited.event.BlockInteractionPhase;
 import io.github.eggohito.nether_reactor_revisited.reactor.core.CoreState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -15,7 +16,6 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.TypedEntityData;
 import net.minecraft.world.item.enchantment.*;
 import net.minecraft.world.level.Level;
@@ -32,7 +32,6 @@ import net.minecraft.world.phys.BlockHitResult;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-//  TODO: Add more triggers/conditions for activating, reactivating, or checking an active reactor core's state
 public class ReactorCoreBlock extends BaseEntityBlock {
 
 	public static final MapCodec<ReactorCoreBlock> CODEC = simpleCodec(ReactorCoreBlock::new);
@@ -56,32 +55,34 @@ public class ReactorCoreBlock extends BaseEntityBlock {
 	@Override
 	protected InteractionResult useItemOn(ItemStack itemStack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
 
-		if (level.getBlockEntity(pos) instanceof ReactorCoreBlockEntity reactorCore && state.getValue(STATE) == CoreState.DEACTIVATED && itemStack.is(Items.DIAMOND)) {
+		if (level.getBlockEntity(pos) instanceof ReactorCoreBlockEntity reactorCore) {
 
-			itemStack.consume(1, player);
-			reactorCore.trigger();
+			var result = state.getValue(STATE).triggerEvent(level, pos, state, reactorCore, player, hand, hitResult, BlockInteractionPhase.WITH_ITEM);
 
-			return InteractionResult.SUCCESS;
+			if (result != null) {
+				return result;
+			}
 
 		}
 
-		else {
-			return InteractionResult.TRY_WITH_EMPTY_HAND;
-		}
+		return InteractionResult.TRY_WITH_EMPTY_HAND;
 
 	}
 
 	@Override
 	protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
 
-		if (level.getBlockEntity(pos) instanceof ReactorCoreBlockEntity reactorCore && state.getValue(STATE) == CoreState.NORMAL) {
-			reactorCore.trigger();
-			return InteractionResult.SUCCESS;
+		if (level.getBlockEntity(pos) instanceof ReactorCoreBlockEntity reactorCore) {
+
+			var result = state.getValue(STATE).triggerEvent(level, pos, state, reactorCore, player, InteractionHand.MAIN_HAND, hitResult, BlockInteractionPhase.WITHOUT_ITEM);
+
+			if (result != null) {
+				return result;
+			}
+
 		}
 
-		else {
-			return InteractionResult.PASS;
-		}
+		return InteractionResult.PASS;
 
 	}
 
@@ -99,6 +100,7 @@ public class ReactorCoreBlock extends BaseEntityBlock {
 
 			if (blockEntityData != null && !blockEntityData.contains("in_phase")) {
 				reactorCore.copyState(state.getValue(STATE));
+				reactorCore.setChanged();
 			}
 
 		}

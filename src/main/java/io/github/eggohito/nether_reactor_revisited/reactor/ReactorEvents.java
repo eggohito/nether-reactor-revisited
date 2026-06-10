@@ -1,0 +1,195 @@
+package io.github.eggohito.nether_reactor_revisited.reactor;
+
+import io.github.eggohito.nether_reactor_revisited.block.ReactorCoreBlock;
+import io.github.eggohito.nether_reactor_revisited.block.entity.ReactorCoreBlockEntity;
+import io.github.eggohito.nether_reactor_revisited.event.BlockInteractionPhase;
+import io.github.eggohito.nether_reactor_revisited.event.CoreInteractionEvent;
+import io.github.eggohito.nether_reactor_revisited.reactor.core.CoreState;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.EntitySelector;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+
+public final class ReactorEvents {
+
+	public static final CoreInteractionEvent CHECK_IF_LEVEL_WITH_REACTOR = (level, pos, state, core, user, hand, hitResult, interactionPhase) -> {
+
+		if ((interactionPhase != BlockInteractionPhase.WITH_ITEM || state.getValue(ReactorCoreBlock.STATE) != CoreState.NORMAL) && (interactionPhase != BlockInteractionPhase.WITHOUT_ITEM || state.getValue(ReactorCoreBlock.STATE) != CoreState.DEACTIVATED)) {
+			return InteractionResult.PASS;
+		}
+
+		else if (user.getBlockY() == pos.below().getY()) {
+			return InteractionResult.PASS;
+		}
+
+		else {
+			user.sendOverlayMessage(Component.translatable("event.nether-reactor-revisited.not_level_with_reactor").withStyle(ChatFormatting.RED));
+			return InteractionResult.CONSUME;
+		}
+
+	};
+
+	public static final CoreInteractionEvent CHECK_FOR_OTHER_NEARBY_REACTORS = (level, pos, state, core, user, hand, hitResult, interactionPhase) -> {
+
+		if ((interactionPhase != BlockInteractionPhase.WITH_ITEM || state.getValue(ReactorCoreBlock.STATE) != CoreState.NORMAL) && (interactionPhase != BlockInteractionPhase.WITHOUT_ITEM || state.getValue(ReactorCoreBlock.STATE) != CoreState.DEACTIVATED)) {
+			return InteractionResult.PASS;
+		}
+
+		Iterable<BlockPos> withinManhattan = BlockPos.withinManhattan(pos, 32, 32, 32);
+		long nearbyReactors = 0;
+
+		for (var nearbyPos : withinManhattan) {
+
+			if (level.hasChunkAt(nearbyPos) && level.getBlockState(nearbyPos).getBlock() instanceof ReactorCoreBlock) {
+				nearbyReactors++;
+			}
+
+		}
+
+		if (nearbyReactors > 1) {
+			user.sendOverlayMessage(Component.translatable("event.nether-reactor-revisited.nearby_cores_found", nearbyReactors).withStyle(ChatFormatting.RED));
+			return InteractionResult.CONSUME;
+		}
+
+		else {
+			return InteractionResult.PASS;
+		}
+
+	};
+
+	public static final CoreInteractionEvent CHECK_IF_NEARBY_PLAYERS_ARE_TOO_FAR = (level, pos, state, core, user, hand, hitResult, interactionPhase) -> {
+
+		if ((interactionPhase != BlockInteractionPhase.WITH_ITEM || state.getValue(ReactorCoreBlock.STATE) != CoreState.NORMAL) && (interactionPhase != BlockInteractionPhase.WITHOUT_ITEM || state.getValue(ReactorCoreBlock.STATE) != CoreState.DEACTIVATED)) {
+			return InteractionResult.PASS;
+		}
+
+		else {
+
+			Vec3 centerPos = pos.getCenter();
+			int nearbyPlayersThatAreTooFar = level.getEntitiesOfClass(Player.class, new AABB(pos).inflate(12), EntitySelector.NO_CREATIVE_OR_SPECTATOR.and(player -> player.position().distanceTo(centerPos) > 6)).size();
+
+			if (nearbyPlayersThatAreTooFar > 0) {
+				user.sendOverlayMessage(Component.translatable("event.nether-reactor-revisited.nearby_players_too_far", nearbyPlayersThatAreTooFar).withStyle(ChatFormatting.RED));
+				return InteractionResult.CONSUME;
+			}
+
+			else {
+				return InteractionResult.PASS;
+			}
+
+		}
+
+	};
+
+	public static final CoreInteractionEvent CHECK_ELAPSED_ACTIVE_SECONDS = (level, pos, state, core, user, hand, hitResult, interactionPhase) -> {
+
+		if (state.getValue(ReactorCoreBlock.STATE) == CoreState.ACTIVATED) {
+
+			ReactorPhase phase = core.getStatus().phase();
+			long elapsedSeconds = (level.getGameTime() - core.getStatus().since()) / 20;
+
+			switch (phase) {
+				case STABLE ->
+					user.sendOverlayMessage(Component.translatable("event.nether-reactor-revisited.elapsed_active_seconds.stable", elapsedSeconds).withStyle(ChatFormatting.RED));
+				case UNSTABLE ->
+					user.sendOverlayMessage(Component.translatable("event.nether-reactor-revisited.elapsed_active_seconds.unstable", ((60 / 20) - elapsedSeconds)).withStyle(ChatFormatting.RED));
+				default -> {
+					return InteractionResult.CONSUME;
+				}
+			}
+
+			return InteractionResult.SUCCESS;
+
+		}
+
+		else {
+			return InteractionResult.PASS;
+		}
+
+	};
+
+	public static final CoreInteractionEvent ACTIVATE = (level, pos, state, core, user, hand, hitResult, interactionPhase) -> {
+
+		if (interactionPhase != BlockInteractionPhase.WITHOUT_ITEM) {
+			return InteractionResult.PASS;
+		}
+
+		else if (hasCorrectStructure(level, pos, core, user)) {
+
+			if (level instanceof ServerLevel serverLevel) {
+				serverLevel.getServer().getPlayerList().broadcastSystemMessage(Component.translatable("event.nether-reactor-revisited.activate.success", user.getName()).withStyle(ChatFormatting.GREEN), false);
+				core.trigger();
+			}
+
+			return InteractionResult.SUCCESS;
+
+		}
+
+		else {
+			user.sendOverlayMessage(Component.translatable("event.nether-reactor-revisited.activate.fail").withStyle(ChatFormatting.RED));
+			return InteractionResult.CONSUME;
+		}
+
+	};
+
+	public static final CoreInteractionEvent REACTIVATE = (level, pos, state, core, user, hand, hitResult, interactionPhase) -> {
+
+		if (interactionPhase != BlockInteractionPhase.WITH_ITEM) {
+			return InteractionResult.PASS;
+		}
+
+		else if (hasCorrectStructure(level, pos, core, user)) {
+
+			ItemStack item = user.getItemInHand(hand);
+			MinecraftServer server = level.getServer();
+
+			if (item.is(Items.DIAMOND)) {
+
+				if (server != null) {
+
+					server.getPlayerList().broadcastSystemMessage(Component.translatable("event.nether-reactor-revisited.reactivate.success", user.getName()).withStyle(ChatFormatting.GREEN), false);
+
+					item.consume(1, user);
+					core.trigger();
+
+				}
+
+				return InteractionResult.SUCCESS;
+
+			}
+
+			else {
+				user.sendOverlayMessage(Component.translatable("event.nether-reactor-revisited.reactivate.fail.missing_item").withStyle(ChatFormatting.RED));
+				return InteractionResult.CONSUME;
+			}
+
+		}
+
+		else {
+			user.sendOverlayMessage(Component.translatable("event.nether-reactor-revisited.reactivate.fail.incorrect_pattern").withStyle(ChatFormatting.RED));
+			return InteractionResult.CONSUME;
+		}
+
+	};
+
+	private static boolean hasCorrectStructure(Level level, BlockPos pos, ReactorCoreBlockEntity core, Player user) {
+
+		Direction facing = user.getDirection();
+		Direction oppositeFacing = facing.getOpposite();
+
+		BlockPos frontTopLeftPos = pos.relative(oppositeFacing).offset(-oppositeFacing.getStepZ(), 1, oppositeFacing.getStepX());
+		return core.getStatus().pattern().matches(level, frontTopLeftPos, facing, Direction.UP) != null;
+
+	}
+
+}

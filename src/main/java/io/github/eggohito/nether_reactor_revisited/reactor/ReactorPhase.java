@@ -6,11 +6,12 @@ import net.minecraft.world.level.block.state.pattern.BlockPattern;
 
 public enum ReactorPhase implements StringRepresentable {
 
-	NONE("none", ReactorPatterns.NORMAL),
+	NORMAL("normal", ReactorPatterns.NORMAL),
+	ACTIVATING("activating", ReactorPatterns.ACTIVATING),
 	STABLE("stable", ReactorPatterns.ACTIVATED),
 	UNSTABLE("unstable", ReactorPatterns.ACTIVATED),
-	ACTIVATING("activating", ReactorPatterns.ACTIVATING),
-	DEACTIVATING("deactivating", ReactorPatterns.DEACTIVATING);
+	DEACTIVATING("deactivating", ReactorPatterns.DEACTIVATING),
+	DEACTIVATED("deactivated", ReactorPatterns.DEACTIVATED);
 
 	public static final Codec<ReactorPhase> CODEC = StringRepresentable.fromEnum(ReactorPhase::values);
 

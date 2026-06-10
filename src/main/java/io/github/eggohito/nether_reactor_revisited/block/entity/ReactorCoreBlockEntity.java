@@ -12,6 +12,11 @@ import io.github.eggohito.nether_reactor_revisited.reactor.ReactorPhase;
 import io.github.eggohito.nether_reactor_revisited.reactor.core.CoreState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.clock.ClockTimeMarkers;
 import net.minecraft.world.clock.ServerClockManager;
@@ -25,28 +30,58 @@ import net.minecraft.world.level.block.state.pattern.BlockPattern;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.Nullable;
 
 import java.util.function.Predicate;
 
 public class ReactorCoreBlockEntity extends BlockEntity {
 
-	private InPhase inPhase = InPhase.NONE;
-	private int phaseLevel = 0;
+	private Status status = Status.NORMAL;
+	private int step = 0;
 
 	public ReactorCoreBlockEntity(BlockPos worldPosition, BlockState blockState) {
 		super(NRRBlockEntities.REACTOR_CORE, worldPosition, blockState);
 	}
 
 	@Override
+	public @Nullable Packet<ClientGamePacketListener> getUpdatePacket() {
+		return ClientboundBlockEntityDataPacket.create(this);
+	}
+
+	@Override
+	public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+		return this.saveWithoutMetadata(registries);
+	}
+
+	@Override
 	protected void saveAdditional(ValueOutput output) {
-		output.store("in_phase", InPhase.CODEC, this.inPhase);
-		output.putInt("phase_level", this.phaseLevel);
+		output.store("status", Status.CODEC, this.status);
+		output.putInt("step", this.step);
 	}
 
 	@Override
 	protected void loadAdditional(ValueInput input) {
-		this.inPhase = input.read("in_phase", InPhase.CODEC).orElse(InPhase.NONE);
-		this.phaseLevel = input.getIntOr("phase_level", 0);
+		this.status = input.read("status", Status.CODEC).orElse(Status.NORMAL);
+		this.step = input.getIntOr("step", 0);
+	}
+
+	@Override
+	public void setChanged() {
+
+		super.setChanged();
+
+		if (this.getLevel() != null) {
+			this.getLevel().sendBlockUpdated(this.getBlockPos(), this.getBlockState(), this.getBlockState(), Block.UPDATE_ALL);
+		}
+
+	}
+
+	public Status getStatus() {
+		return status;
+	}
+
+	public int getStep() {
+		return step;
 	}
 
 	public void copyState(CoreState state) {
@@ -71,14 +106,18 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 
 	}
 
+	protected void step() {
+		this.step = Math.min(this.getStep() + 1, this.getStatus().pattern().getHeight());
+	}
+
 	protected void changePhase(ReactorPhase phase) {
 
-		if (!(this.getLevel() instanceof ServerLevel serverLevel)) {
+		if (this.getLevel() == null) {
 			return;
 		}
 
-		this.inPhase = new InPhase(phase, serverLevel.getGameTime());
-		this.phaseLevel = 0;
+		this.status = new Status(phase, this.getLevel().getGameTime());
+		this.step = 0;
 
 	}
 
@@ -88,8 +127,8 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 
 	protected void replaceLayerWith(Level level, LoadingCache<BlockPos, BlockInWorld> levelCache, BlockPos frontTopLeft, Direction forwards, Direction up, Predicate<BlockInWorld> predicate, BlockState replacementState, int layerY) {
 
-		for (int x = 0; x < inPhase.pattern().getWidth(); x++) {
-			for (int z = 0; z < inPhase.pattern().getDepth(); z++) {
+		for (int x = 0; x < status.pattern().getWidth(); x++) {
+			for (int z = 0; z < status.pattern().getDepth(); z++) {
 
 				BlockPos pos = BlockPatternAccessor.callTranslateAndRotate(frontTopLeft, forwards, up, x, layerY, z);
 				BlockInWorld matchedBlock = levelCache.getUnchecked(pos);
@@ -105,13 +144,13 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 
 	public static void serverTick(Level level, BlockPos pos, BlockState state, ReactorCoreBlockEntity entity) {
 
-		BlockPattern pattern = entity.inPhase.pattern();
+		BlockPattern pattern = entity.getStatus().pattern();
 		BlockPos frontTopLeft = pos.offset(pattern.getWidth() / 3, pattern.getHeight() / 3, pattern.getDepth() / 3);
 
 		boolean changed = false;
-		long elapsedTicks = level.getGameTime() - entity.inPhase.since();
+		long elapsedTicks = level.getGameTime() - entity.getStatus().since();
 
-		switch (entity.inPhase.name()) {
+		switch (entity.getStatus().phase()) {
 			case STABLE -> {
 
 				boolean patternFailed = pattern.matches(level, frontTopLeft, Direction.WEST, Direction.UP) == null;
@@ -130,7 +169,7 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 			}
 			case UNSTABLE -> {
 
-				if (elapsedTicks >= /* 100 */ 20) {
+				if (elapsedTicks >= 60) {
 					level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
 					level.explode(null, pos.getX(), pos.getY(), pos.getZ(), 5.0F, Level.ExplosionInteraction.BLOCK);
 				}
@@ -141,13 +180,13 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 				if (elapsedTicks % 20 == 0) {
 
 					BlockPattern.BlockPatternMatch match = pattern.matches(level, frontTopLeft, Direction.WEST, Direction.UP);
-					changed = match == null;
+					changed = true;
 
 					if (match == null) {
 						entity.changePhase(ReactorPhase.UNSTABLE);
 					}
 
-					else if (entity.phaseLevel >= pattern.getHeight()) {
+					else if (entity.step >= pattern.getHeight()) {
 
 						entity.replaceLayerWith(
 							level,
@@ -168,11 +207,10 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 							match,
 							BlockInWorld.hasState(matched -> matched.is(Blocks.COBBLESTONE) || matched.is(Blocks.OBSIDIAN)),
 							NRRBlocks.GLOWING_OBSIDIAN.defaultBlockState(),
-							(pattern.getHeight() - 1) - entity.phaseLevel
+							(pattern.getHeight() - 1) - entity.getStep()
 						);
 
-						entity.phaseLevel = Math.min(entity.phaseLevel + 1, pattern.getHeight());
-						changed = true;
+						entity.step();
 
 					}
 
@@ -198,14 +236,14 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 							Direction.UP,
 							BlockInWorld.hasState(Predicate.not(_state -> _state.is(NRRBlocks.REACTOR_CORE))),
 							Blocks.OBSIDIAN.defaultBlockState(),
-							entity.phaseLevel
+							entity.getStep()
 						);
 
-						entity.phaseLevel = Math.min(entity.phaseLevel + 1, pattern.getHeight());
+						entity.step();
 						changed = true;
 
-						if (entity.phaseLevel >= pattern.getHeight()) {
-							entity.changePhase(ReactorPhase.NONE);
+						if (entity.getStep() >= pattern.getHeight()) {
+							entity.changePhase(ReactorPhase.DEACTIVATED);
 						}
 
 					}
@@ -214,7 +252,7 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 
 			}
 			default -> {
-				//  No-op; null or something else
+				//  No-op
 			}
 		}
 
@@ -224,17 +262,17 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 
 	}
 
-	public record InPhase(ReactorPhase name, long since) {
+	public record Status(ReactorPhase phase, long since) {
 
-		public static final InPhase NONE = new InPhase(ReactorPhase.NONE, 0L);
+		public static final Status NORMAL = new Status(ReactorPhase.NORMAL, 0L);
 
-		public static final Codec<InPhase> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-			ReactorPhase.CODEC.fieldOf("name").forGetter(InPhase::name),
-			Codec.LONG.fieldOf("since").forGetter(InPhase::since)
-		).apply(instance, InPhase::new));
+		public static final Codec<Status> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+			ReactorPhase.CODEC.fieldOf("phase").forGetter(Status::phase),
+			Codec.LONG.fieldOf("since").forGetter(Status::since)
+		).apply(instance, Status::new));
 
 		public BlockPattern pattern() {
-			return name().getPattern();
+			return phase().getPattern();
 		}
 
 	}
