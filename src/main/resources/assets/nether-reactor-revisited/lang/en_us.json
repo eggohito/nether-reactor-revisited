@@ -9,7 +9,7 @@
 	"event.nether-reactor-revisited.nearby_players_too_far": "%s nearby player(s) must be within 6 blocks of the Nether reactor!",
 	"event.nether-reactor-revisited.not_level_with_reactor": "Must be standing level with the structure!",
 	"event.nether-reactor-revisited.reactivate.fail.incorrect_pattern": "Incorrect structure pattern!",
-	"event.nether-reactor-revisited.reactivate.fail.missing_item": "Requires 1 diamond to re-activate!",
+	"event.nether-reactor-revisited.reactivate.fail.missing_item": "Requires 1 diamond gem to re-activate!",
 	"event.nether-reactor-revisited.reactivate.success": "%s reactivated a Nether reactor!",
 	"nether-reactor-revisited.reactor_core.state.activated": "ACTIVATED",
 	"nether-reactor-revisited.reactor_core.state.deactivated": "DEACTIVATED",

@@ -5,6 +5,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.eggohito.nether_reactor_revisited.block.ReactorCoreBlock;
 import io.github.eggohito.nether_reactor_revisited.content.NRRBlockEntities;
+import io.github.eggohito.nether_reactor_revisited.content.NRRBlockTags;
 import io.github.eggohito.nether_reactor_revisited.content.NRRBlocks;
 import io.github.eggohito.nether_reactor_revisited.content.NRRGameRules;
 import io.github.eggohito.nether_reactor_revisited.mixin.access.BlockPatternAccessor;
@@ -196,7 +197,7 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 						entity.replaceLayerWith(
 							serverLevel,
 							match,
-							BlockInWorld.hasState(matched -> matched.is(Blocks.GOLD_BLOCK)),
+							BlockInWorld.hasState(matched -> matched.is(NRRBlockTags.POWER_BLOCKS)),
 							NRRBlocks.GLOWING_OBSIDIAN.defaultBlockState(),
 							pattern.getHeight() - 1
 						);
@@ -210,7 +211,7 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 						entity.replaceLayerWith(
 							serverLevel,
 							match,
-							BlockInWorld.hasState(matched -> matched.is(Blocks.COBBLESTONE) || matched.is(Blocks.OBSIDIAN)),
+							BlockInWorld.hasState(matched -> matched.is(NRRBlockTags.ACTIVATING_REACTOR_BLOCKS)),
 							NRRBlocks.GLOWING_OBSIDIAN.defaultBlockState(),
 							(pattern.getHeight() - 1) - entity.getStep()
 						);
