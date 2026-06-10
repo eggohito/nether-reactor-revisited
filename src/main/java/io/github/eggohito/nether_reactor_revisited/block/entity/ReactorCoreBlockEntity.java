@@ -6,6 +6,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.eggohito.nether_reactor_revisited.block.ReactorCoreBlock;
 import io.github.eggohito.nether_reactor_revisited.content.NRRBlockEntities;
 import io.github.eggohito.nether_reactor_revisited.content.NRRBlocks;
+import io.github.eggohito.nether_reactor_revisited.content.NRRGameRules;
 import io.github.eggohito.nether_reactor_revisited.mixin.access.BlockPatternAccessor;
 import io.github.eggohito.nether_reactor_revisited.mixin.access.BlockPatternMatchAccessor;
 import io.github.eggohito.nether_reactor_revisited.reactor.ReactorPhase;
@@ -144,17 +145,21 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 
 	public static void serverTick(Level level, BlockPos pos, BlockState state, ReactorCoreBlockEntity entity) {
 
+		if (!(level instanceof ServerLevel serverLevel)) {
+			return;
+		}
+
 		BlockPattern pattern = entity.getStatus().pattern();
 		BlockPos frontTopLeft = pos.offset(pattern.getWidth() / 3, pattern.getHeight() / 3, pattern.getDepth() / 3);
 
 		boolean changed = false;
-		long elapsedTicks = level.getGameTime() - entity.getStatus().since();
+		long elapsedTicks = serverLevel.getGameTime() - entity.getStatus().since();
 
 		switch (entity.getStatus().phase()) {
 			case STABLE -> {
 
-				boolean patternFailed = pattern.matches(level, frontTopLeft, Direction.WEST, Direction.UP) == null;
-				boolean maxTimeReached = elapsedTicks >= /* 900 */ 100;
+				boolean patternFailed = pattern.matches(serverLevel, frontTopLeft, Direction.WEST, Direction.UP) == null;
+				boolean maxTimeReached = elapsedTicks >= serverLevel.getGameRules().get(NRRGameRules.STABLE_CORE_LIFETIME);
 
 				if (patternFailed) {
 					entity.changePhase(ReactorPhase.UNSTABLE);
@@ -169,9 +174,9 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 			}
 			case UNSTABLE -> {
 
-				if (elapsedTicks >= 60) {
-					level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
-					level.explode(null, pos.getX(), pos.getY(), pos.getZ(), 5.0F, Level.ExplosionInteraction.BLOCK);
+				if (elapsedTicks >= serverLevel.getGameRules().get(NRRGameRules.UNSTABLE_CORE_LIFETIME)) {
+					serverLevel.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+					serverLevel.explode(null, pos.getX(), pos.getY(), pos.getZ(), 5.0F, Level.ExplosionInteraction.BLOCK);
 				}
 
 			}
@@ -179,7 +184,7 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 
 				if (elapsedTicks % 20 == 0) {
 
-					BlockPattern.BlockPatternMatch match = pattern.matches(level, frontTopLeft, Direction.WEST, Direction.UP);
+					BlockPattern.BlockPatternMatch match = pattern.matches(serverLevel, frontTopLeft, Direction.WEST, Direction.UP);
 					changed = true;
 
 					if (match == null) {
@@ -189,7 +194,7 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 					else if (entity.step >= pattern.getHeight()) {
 
 						entity.replaceLayerWith(
-							level,
+							serverLevel,
 							match,
 							BlockInWorld.hasState(matched -> matched.is(Blocks.GOLD_BLOCK)),
 							NRRBlocks.GLOWING_OBSIDIAN.defaultBlockState(),
@@ -203,7 +208,7 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 					else {
 
 						entity.replaceLayerWith(
-							level,
+							serverLevel,
 							match,
 							BlockInWorld.hasState(matched -> matched.is(Blocks.COBBLESTONE) || matched.is(Blocks.OBSIDIAN)),
 							NRRBlocks.GLOWING_OBSIDIAN.defaultBlockState(),
@@ -222,14 +227,14 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 				if (elapsedTicks % 20 == 0) {
 
 					if (state.getValue(ReactorCoreBlock.STATE) != CoreState.DEACTIVATED) {
-						level.setBlock(pos, state.setValue(ReactorCoreBlock.STATE, CoreState.DEACTIVATED), Block.UPDATE_CLIENTS);
+						serverLevel.setBlock(pos, state.setValue(ReactorCoreBlock.STATE, CoreState.DEACTIVATED), Block.UPDATE_CLIENTS);
 					}
 
 					else {
 
-						LoadingCache<BlockPos, BlockInWorld> levelCache = BlockPattern.createLevelCache(level, false);
+						LoadingCache<BlockPos, BlockInWorld> levelCache = BlockPattern.createLevelCache(serverLevel, false);
 						entity.replaceLayerWith(
-							level,
+							serverLevel,
 							levelCache,
 							frontTopLeft,
 							Direction.WEST,

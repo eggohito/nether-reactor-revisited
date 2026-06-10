@@ -2,6 +2,7 @@ package io.github.eggohito.nether_reactor_revisited.reactor;
 
 import io.github.eggohito.nether_reactor_revisited.block.ReactorCoreBlock;
 import io.github.eggohito.nether_reactor_revisited.block.entity.ReactorCoreBlockEntity;
+import io.github.eggohito.nether_reactor_revisited.content.NRRGameRules;
 import io.github.eggohito.nether_reactor_revisited.event.BlockInteractionPhase;
 import io.github.eggohito.nether_reactor_revisited.event.CoreInteractionEvent;
 import io.github.eggohito.nether_reactor_revisited.reactor.core.CoreState;
@@ -93,7 +94,7 @@ public final class ReactorEvents {
 
 	public static final CoreInteractionEvent CHECK_ELAPSED_ACTIVE_SECONDS = (level, pos, state, core, user, hand, hitResult, interactionPhase) -> {
 
-		if (state.getValue(ReactorCoreBlock.STATE) == CoreState.ACTIVATED) {
+		if (level instanceof ServerLevel serverLevel && state.getValue(ReactorCoreBlock.STATE) == CoreState.ACTIVATED) {
 
 			ReactorPhase phase = core.getStatus().phase();
 			long elapsedSeconds = (level.getGameTime() - core.getStatus().since()) / 20;
@@ -102,7 +103,7 @@ public final class ReactorEvents {
 				case STABLE ->
 					user.sendOverlayMessage(Component.translatable("event.nether-reactor-revisited.elapsed_active_seconds.stable", elapsedSeconds).withStyle(ChatFormatting.RED));
 				case UNSTABLE ->
-					user.sendOverlayMessage(Component.translatable("event.nether-reactor-revisited.elapsed_active_seconds.unstable", ((60 / 20) - elapsedSeconds)).withStyle(ChatFormatting.RED));
+					user.sendOverlayMessage(Component.translatable("event.nether-reactor-revisited.elapsed_active_seconds.unstable", ((serverLevel.getGameRules().get(NRRGameRules.UNSTABLE_CORE_LIFETIME) / 20) - elapsedSeconds)).withStyle(ChatFormatting.RED));
 				default -> {
 					return InteractionResult.CONSUME;
 				}
