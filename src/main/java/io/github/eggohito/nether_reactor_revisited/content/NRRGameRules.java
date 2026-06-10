@@ -5,7 +5,7 @@ import net.fabricmc.fabric.api.gamerule.v1.GameRuleBuilder;
 import net.minecraft.world.level.gamerules.GameRule;
 import net.minecraft.world.level.gamerules.GameRuleCategory;
 
-public class NRRGameRules {
+public final class NRRGameRules {
 
 	public static final GameRule<Integer> STABLE_CORE_LIFETIME = GameRuleBuilder.forInteger(900)
 		.category(GameRuleCategory.MISC)
