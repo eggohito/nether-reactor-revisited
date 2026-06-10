@@ -118,7 +118,7 @@ public class ReactorCoreBlock extends BaseEntityBlock {
 		Registry<Enchantment> enchantments = level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT);
 		Holder<Enchantment> silkTouch = enchantments.get(Enchantments.SILK_TOUCH).orElse(null);
 
-		if (silkTouch == null || tool.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY).getLevel(silkTouch) <= 0) {
+		if (silkTouch == null || tool.getEnchantments().getLevel(silkTouch) <= 0) {
 			level.explode(null, pos.getX(), pos.getY(), pos.getZ(), 5.0F, Level.ExplosionInteraction.BLOCK);
 		}
 

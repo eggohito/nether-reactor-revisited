@@ -1,6 +1,5 @@
 package io.github.eggohito.nether_reactor_revisited.content;
 
-import com.mojang.serialization.Codec;
 import io.github.eggohito.nether_reactor_revisited.NetherReactorRevisited;
 import net.fabricmc.fabric.api.gamerule.v1.GameRuleBuilder;
 import net.minecraft.world.level.gamerules.GameRule;
