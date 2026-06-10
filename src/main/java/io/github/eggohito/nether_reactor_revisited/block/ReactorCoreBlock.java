@@ -4,6 +4,7 @@ import com.mojang.serialization.MapCodec;
 import io.github.eggohito.nether_reactor_revisited.block.entity.ReactorCoreBlockEntity;
 import io.github.eggohito.nether_reactor_revisited.content.NRRBlockEntities;
 import io.github.eggohito.nether_reactor_revisited.event.BlockInteractionPhase;
+import io.github.eggohito.nether_reactor_revisited.reactor.ReactorPhase;
 import io.github.eggohito.nether_reactor_revisited.reactor.core.CoreState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -110,7 +111,7 @@ public class ReactorCoreBlock extends BaseEntityBlock {
 	@Override
 	protected void spawnAfterBreak(BlockState state, ServerLevel level, BlockPos pos, ItemStack tool, boolean dropExperience) {
 
-		if (state.getValue(STATE) != CoreState.ACTIVATED) {
+		if (state.getValue(STATE) != CoreState.ACTIVATED || !(level.getBlockEntity(pos) instanceof ReactorCoreBlockEntity reactorCore) || reactorCore.getStatus().phase() != ReactorPhase.UNSTABLE) {
 			return;
 		}
 
