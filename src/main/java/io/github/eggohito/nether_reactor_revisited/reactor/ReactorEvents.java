@@ -23,6 +23,40 @@ import net.minecraft.world.phys.Vec3;
 
 public final class ReactorEvents {
 
+	public static final CoreInteractionEvent REACTOR_TOO_HIGH = (level, pos, state, core, user, hand, hitResult, interactionPhase) -> {
+
+		if ((interactionPhase != BlockInteractionPhase.WITH_ITEM || state.getValue(ReactorCoreBlock.STATE) != CoreState.DEACTIVATED) && (interactionPhase != BlockInteractionPhase.WITHOUT_ITEM || state.getValue(ReactorCoreBlock.STATE) != CoreState.NORMAL)) {
+			return InteractionResult.PASS;
+		}
+
+		else if (pos.getY() + core.getDimensions().getY() >= level.getMaxY()) {
+			user.sendOverlayMessage(Component.translatable("event.nether-reactor-revisited.too_high").withStyle(ChatFormatting.RED));
+			return InteractionResult.CONSUME;
+		}
+
+		else {
+			return InteractionResult.PASS;
+		}
+
+	};
+
+	public static final CoreInteractionEvent REACTOR_TOO_LOW = (level, pos, state, core, user, hand, hitResult, interactionPhase) -> {
+
+		if ((interactionPhase != BlockInteractionPhase.WITH_ITEM || state.getValue(ReactorCoreBlock.STATE) != CoreState.DEACTIVATED) && (interactionPhase != BlockInteractionPhase.WITHOUT_ITEM || state.getValue(ReactorCoreBlock.STATE) != CoreState.NORMAL)) {
+			return InteractionResult.PASS;
+		}
+
+		else if (pos.getY() <= level.getMinY() + 16) {
+			user.sendOverlayMessage(Component.translatable("event.nether-reactor-revisited.too_low").withStyle(ChatFormatting.RED));
+			return InteractionResult.CONSUME;
+		}
+
+		else {
+			return InteractionResult.PASS;
+		}
+
+	};
+
 	public static final CoreInteractionEvent CHECK_IF_LEVEL_WITH_REACTOR = (level, pos, state, core, user, hand, hitResult, interactionPhase) -> {
 
 		if ((interactionPhase != BlockInteractionPhase.WITH_ITEM || state.getValue(ReactorCoreBlock.STATE) != CoreState.DEACTIVATED) && (interactionPhase != BlockInteractionPhase.WITHOUT_ITEM || state.getValue(ReactorCoreBlock.STATE) != CoreState.NORMAL)) {

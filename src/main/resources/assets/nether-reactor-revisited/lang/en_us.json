@@ -11,6 +11,8 @@
 	"event.nether-reactor-revisited.reactivate.fail.incorrect_pattern": "Incorrect structure pattern!",
 	"event.nether-reactor-revisited.reactivate.fail.missing_item": "Requires 1 diamond gem to re-activate!",
 	"event.nether-reactor-revisited.reactivate.success": "%s reactivated a Nether reactor!",
+	"event.nether-reactor-revisited.too_high": "The Nether reactor needs to be built lower down!",
+	"event.nether-reactor-revisited.too_low": "The Nether reactor needs to be built higher up!",
 	"nether-reactor-revisited.reactor_core.state.activated": "ACTIVATED",
 	"nether-reactor-revisited.reactor_core.state.deactivated": "DEACTIVATED",
 	"nether-reactor-revisited.reactor_core.state.normal": "NORMAL",

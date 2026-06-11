@@ -68,10 +68,11 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 		.maxNearbyEntities(32)
 		.spawnRange(8);
 
-	private StructureTemplate spireTemplate;
-	private StructureTemplate emptyTemplate;
+	private final ThreadLocal<StructureTemplate> spireStructure = new ThreadLocal<>();
+	private final ThreadLocal<StructureTemplate> degenSpireStructure = new ThreadLocal<>();
 
 	private Status status = Status.NORMAL;
+	private Vec3i dimensions = Vec3i.ZERO;
 	private int step = 0;
 
 	public ReactorCoreBlockEntity(BlockPos worldPosition, BlockState blockState) {
@@ -93,6 +94,7 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 		this.mobSpawner.save(output.child("mob_spawner"));
 		this.itemSpawner.save(output.child("item_spawner"));
 		output.store("status", Status.CODEC, this.status);
+		output.store("dimensions", Vec3i.CODEC, this.dimensions);
 		output.putInt("step", this.step);
 	}
 
@@ -101,6 +103,7 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 		input.child("mob_spawner").ifPresent(child -> this.mobSpawner.load(this.getLevel(), this.getBlockPos(), child));
 		input.child("item_spawner").ifPresent(this.itemSpawner::load);
 		this.status = input.read("status", Status.CODEC).orElse(Status.NORMAL);
+		this.dimensions = input.read("dimensions", Vec3i.CODEC).orElse(Vec3i.ZERO);
 		this.step = input.getIntOr("step", 0);
 	}
 
@@ -117,6 +120,10 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 
 	public Status getStatus() {
 		return status;
+	}
+
+	public Vec3i getDimensions() {
+		return dimensions;
 	}
 
 	public int getStep() {
@@ -152,41 +159,24 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 
 	public boolean generateSpire(ServerLevel level) {
 
-		if (spireTemplate == null) {
-
-			this.cacheTemplate(level);
-
-			//  Redundancy check; in case the structure doesn't actually exist
-			if (spireTemplate == null) {
-				return false;
-			}
-
+		if (spireStructure.get() == null) {
+			return false;
 		}
 
-		Vec3i size = spireTemplate.getSize();
+		Vec3i size = spireStructure.get().getSize();
 		BlockPos centeredPos = this.getBlockPos().offset(-size.getX() / 2, -2, -size.getZ() / 2);
 
-		StructurePlaceSettings placeSettings = new StructurePlaceSettings();
-		this.cacheTemplate(level);
-
-		return spireTemplate.placeInWorld(level, centeredPos, centeredPos, placeSettings, level.getRandom(), Block.UPDATE_CLIENTS);
+		return spireStructure.get().placeInWorld(level, centeredPos, centeredPos, new StructurePlaceSettings(), level.getRandom(), Block.UPDATE_CLIENTS);
 
 	}
 
 	public void degenerateSpire(ServerLevel level) {
 
-		if (emptyTemplate == null) {
-
-			this.cacheTemplate(level);
-
-			//  Redundancy check; in case the structure doesn't actually exist
-			if (emptyTemplate == null) {
-				return;
-			}
-
+		if (degenSpireStructure.get() == null) {
+			return;
 		}
 
-		Vec3i size = emptyTemplate.getSize();
+		Vec3i size = degenSpireStructure.get().getSize();
 		BlockPos centeredPos = this.getBlockPos().offset(-size.getX() / 2, -2, -size.getZ() / 2);
 
 		RandomSource random = level.getRandom();
@@ -196,17 +186,17 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 			.addProcessor(new BlockRotProcessor(0.25F))
 			.setRandom(random);
 
-		emptyTemplate.placeInWorld(level, centeredPos, centeredPos, placeSettings, level.getRandom(), Block.UPDATE_CLIENTS);
+		degenSpireStructure.get().placeInWorld(level, centeredPos, centeredPos, placeSettings, level.getRandom(), Block.UPDATE_CLIENTS);
 
 	}
 
-	protected void cacheTemplate(ServerLevel level) {
+	protected boolean cacheTemplates(ServerLevel level) {
 
 		StructureTemplateManager templateManager = level.getStructureManager();
 		StructureTemplate template = templateManager.get(STRUCTURE_ID).orElse(null);
 
-		if (template == null || Objects.equals(this.spireTemplate, template)) {
-			return;
+		if (template == null || Objects.equals(spireStructure.get(), template)) {
+			return false;
 		}
 
 		StructureTemplate intermediateTemplate = new StructureTemplate();
@@ -225,8 +215,11 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 
 		((StructureTemplateAccessor) intermediateTemplate).setSize(template.getSize());
 
-		this.spireTemplate = template;
-		this.emptyTemplate = intermediateTemplate;
+		this.dimensions = template.getSize();
+		this.spireStructure.set(template);
+		this.degenSpireStructure.set(intermediateTemplate);
+
+		return true;
 
 	}
 
@@ -275,7 +268,7 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 		BlockPattern pattern = entity.getStatus().pattern();
 		BlockPos frontTopLeft = pos.offset(pattern.getWidth() / 3, pattern.getHeight() / 3, pattern.getDepth() / 3);
 
-		boolean changed = false;
+		boolean changed = entity.cacheTemplates(serverLevel);
 		long elapsedTicks = serverLevel.getGameTime() - entity.getStatus().since();
 
 		switch (entity.getStatus().phase()) {

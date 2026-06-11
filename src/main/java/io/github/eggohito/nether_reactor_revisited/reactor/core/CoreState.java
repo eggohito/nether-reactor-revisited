@@ -24,8 +24,9 @@ public enum CoreState implements StringRepresentable {
 		"normal",
 		ChatFormatting.GREEN,
 		ReactorPhase.NORMAL,
-		ReactorEvents.CHECK_IF_LEVEL_WITH_REACTOR, ReactorEvents.CHECK_FOR_OTHER_NEARBY_REACTORS,
-		ReactorEvents.CHECK_IF_NEARBY_PLAYERS_ARE_TOO_FAR, ReactorEvents.ACTIVATE
+		ReactorEvents.REACTOR_TOO_HIGH, ReactorEvents.REACTOR_TOO_LOW,
+		ReactorEvents.CHECK_FOR_OTHER_NEARBY_REACTORS, ReactorEvents.CHECK_IF_NEARBY_PLAYERS_ARE_TOO_FAR,
+		ReactorEvents.CHECK_IF_LEVEL_WITH_REACTOR, ReactorEvents.ACTIVATE
 	),
 
 	ACTIVATED(
@@ -39,7 +40,8 @@ public enum CoreState implements StringRepresentable {
 		"deactivated",
 		ChatFormatting.DARK_PURPLE,
 		ReactorPhase.DEACTIVATED,
-		ReactorEvents.CHECK_IF_LEVEL_WITH_REACTOR, ReactorEvents.CHECK_FOR_OTHER_NEARBY_REACTORS,
+		ReactorEvents.REACTOR_TOO_HIGH, ReactorEvents.REACTOR_TOO_LOW,
+		ReactorEvents.CHECK_FOR_OTHER_NEARBY_REACTORS, ReactorEvents.CHECK_IF_LEVEL_WITH_REACTOR,
 		ReactorEvents.CHECK_IF_NEARBY_PLAYERS_ARE_TOO_FAR, ReactorEvents.REACTIVATE
 	);
 
