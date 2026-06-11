@@ -135,6 +135,10 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 
 	}
 
+	public void tickSpawners(ServerLevel level) {
+		itemSpawner.serverTick(level, this.getBlockPos().below());
+	}
+
 	public boolean generateSpire(ServerLevel level) {
 
 		if (spireTemplate == null) {
@@ -269,9 +273,6 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 				boolean patternFailed = pattern.matches(serverLevel, frontTopLeft, Direction.WEST, Direction.UP) == null;
 				boolean maxTimeReached = elapsedTicks >= serverLevel.getGameRules().get(NRRGameRules.STABLE_CORE_LIFETIME);
 
-				entity.itemSpawner.serverTick(serverLevel, pos.below());
-				changed = patternFailed || maxTimeReached;
-
 				if (patternFailed) {
 					entity.changePhase(ReactorPhase.UNSTABLE);
 				}
@@ -279,6 +280,12 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 				else if (maxTimeReached) {
 					entity.changePhase(ReactorPhase.DEACTIVATING);
 				}
+
+				else {
+					entity.tickSpawners(serverLevel);
+				}
+
+				changed = patternFailed || maxTimeReached;
 
 			}
 			case UNSTABLE -> {
