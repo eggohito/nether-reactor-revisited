@@ -18,7 +18,8 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.TypedEntityData;
-import net.minecraft.world.item.enchantment.*;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
@@ -99,7 +100,7 @@ public class ReactorCoreBlock extends BaseEntityBlock {
 
 			TypedEntityData<BlockEntityType<?>> blockEntityData = itemStack.get(DataComponents.BLOCK_ENTITY_DATA);
 
-			if (blockEntityData != null && !blockEntityData.contains("in_phase")) {
+			if (blockEntityData != null && !blockEntityData.contains("status")) {
 				reactorCore.copyState(state.getValue(STATE));
 				reactorCore.setChanged();
 			}
