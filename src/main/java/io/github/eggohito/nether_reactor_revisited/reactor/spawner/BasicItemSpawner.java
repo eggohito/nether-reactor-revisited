@@ -89,23 +89,27 @@ public class BasicItemSpawner {
 				return;
 			}
 
-			Vec3 spawnPos = pos.getBottomCenter().add(
-				(random.nextDouble() - random.nextDouble()) * this.spawnRange,
-				random.nextInt(3) - 1,
-				(random.nextDouble() - random.nextDouble()) * this.spawnRange
-			);
+			for (int i = 0; i < spawnCount; i++) {
 
-			for (var item : this.getItemsToDrop(level, spawnPos)) {
+				Vec3 spawnPos = pos.getBottomCenter().add(
+					(random.nextDouble() - random.nextDouble()) * this.spawnRange,
+					random.nextInt(3) - 1,
+					(random.nextDouble() - random.nextDouble()) * this.spawnRange
+				);
 
-				if (this.hasOtherItemsNearby(level, spawnPos)) {
-					continue;
+				for (var item : this.getItemsToDrop(level, spawnPos)) {
+
+					if (this.hasOtherItemsNearby(level, spawnPos)) {
+						continue;
+					}
+
+					ItemEntity entity = new ItemEntity(level, spawnPos.x(), spawnPos.y(), spawnPos.z(), item);
+					entity.snapTo(spawnPos, random.nextFloat() * 360.0F, 0.0F);
+					entity.setDefaultPickUpDelay();
+
+					level.addFreshEntity(entity);
+
 				}
-
-				ItemEntity entity = new ItemEntity(level, spawnPos.x(), spawnPos.y(), spawnPos.z(), item);
-				entity.snapTo(spawnPos, random.nextFloat() * 360.0F, 0.0F);
-				entity.setDefaultPickUpDelay();
-
-				level.addFreshEntity(entity);
 
 			}
 
