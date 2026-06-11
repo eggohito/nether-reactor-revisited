@@ -60,12 +60,13 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 	private final AggroSpawner mobSpawner = new AggroSpawner()
 		.entityId(EntityType.ZOMBIFIED_PIGLIN)
 		.maxNearbyEntities(8)
-		.maxSpawnDelay(80)
+		.maxSpawnDelay(60)
 		.minSpawnDelay(20)
-		.spawnRange(8);
+		.spawnRange(8)
+		.spawnCount(2);
 	private final BasicItemSpawner itemSpawner = new BasicItemSpawner()
 		.lootTable(LOOT_TABLE_ID)
-		.maxNearbyEntities(32)
+		.maxNearbyEntities(64)
 		.spawnRange(8);
 
 	private final ThreadLocal<StructureTemplate> spireStructure = new ThreadLocal<>();
