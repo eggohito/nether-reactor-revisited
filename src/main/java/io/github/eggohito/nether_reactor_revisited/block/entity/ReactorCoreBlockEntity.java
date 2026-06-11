@@ -9,12 +9,14 @@ import io.github.eggohito.nether_reactor_revisited.content.NRRBlockEntities;
 import io.github.eggohito.nether_reactor_revisited.content.NRRBlockTags;
 import io.github.eggohito.nether_reactor_revisited.content.NRRBlocks;
 import io.github.eggohito.nether_reactor_revisited.content.NRRGameRules;
-import io.github.eggohito.nether_reactor_revisited.levelgen.BlockTransformProcessor;
 import io.github.eggohito.nether_reactor_revisited.mixin.access.BlockPatternAccessor;
 import io.github.eggohito.nether_reactor_revisited.mixin.access.BlockPatternMatchAccessor;
+import io.github.eggohito.nether_reactor_revisited.mixin.access.StructureTemplateAccessor;
+import io.github.eggohito.nether_reactor_revisited.mixin.access.StructureTemplatePaletteAccessor;
 import io.github.eggohito.nether_reactor_revisited.reactor.ReactorPhase;
 import io.github.eggohito.nether_reactor_revisited.reactor.core.CoreState;
 import io.github.eggohito.nether_reactor_revisited.reactor.spawner.BasicItemSpawner;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -35,14 +37,17 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.pattern.BlockInWorld;
 import net.minecraft.world.level.block.state.pattern.BlockPattern;
+import net.minecraft.world.level.levelgen.structure.templatesystem.BlockRotProcessor;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.Nullable;
 
-import java.util.OptionalDouble;
+import java.util.List;
+import java.util.Objects;
 import java.util.function.Predicate;
 
 public class ReactorCoreBlockEntity extends BlockEntity {
@@ -54,6 +59,9 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 		.lootTable(LOOT_TABLE_ID)
 		.maxNearbyEntities(32)
 		.spawnRange(8);
+
+	private StructureTemplate spireTemplate;
+	private StructureTemplate emptyTemplate;
 
 	private Status status = Status.NORMAL;
 	private int step = 0;
@@ -111,7 +119,7 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 
 	public void trigger() {
 
-		if (!(this.getLevel() instanceof ServerLevel serverLevel) || !this.placeSpire(serverLevel, OptionalDouble.empty())) {
+		if (!(this.getLevel() instanceof ServerLevel serverLevel) || !this.generateSpire(serverLevel)) {
 			return;
 		}
 
@@ -127,21 +135,83 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 
 	}
 
-	protected boolean placeSpire(ServerLevel level, OptionalDouble chance) {
+	public boolean generateSpire(ServerLevel level) {
 
-		StructureTemplate template = level.getStructureManager().get(STRUCTURE_ID).orElse(null);
-		if (template == null) {
-			return false;
+		if (spireTemplate == null) {
+
+			this.cacheTemplate(level);
+
+			//  Redundancy check; in case the structure doesn't actually exist
+			if (spireTemplate == null) {
+				return false;
+			}
+
 		}
 
-		Vec3i size = template.getSize();
+		Vec3i size = spireTemplate.getSize();
+		BlockPos centeredPos = this.getBlockPos().offset(-size.getX() / 2, -2, -size.getZ() / 2);
+
+		StructurePlaceSettings placeSettings = new StructurePlaceSettings();
+		this.cacheTemplate(level);
+
+		return spireTemplate.placeInWorld(level, centeredPos, centeredPos, placeSettings, level.getRandom(), Block.UPDATE_CLIENTS);
+
+	}
+
+	public void degenerateSpire(ServerLevel level) {
+
+		if (emptyTemplate == null) {
+
+			this.cacheTemplate(level);
+
+			//  Redundancy check; in case the structure doesn't actually exist
+			if (emptyTemplate == null) {
+				return;
+			}
+
+		}
+
+		Vec3i size = emptyTemplate.getSize();
 		BlockPos centeredPos = this.getBlockPos().offset(-size.getX() / 2, -2, -size.getZ() / 2);
 
 		RandomSource random = level.getRandom();
 		StructurePlaceSettings placeSettings = new StructurePlaceSettings();
 
-		chance.ifPresent(_chance -> placeSettings.clearProcessors().addProcessor(new BlockTransformProcessor((float) _chance)).setRandom(random));
-		return template.placeInWorld(level, centeredPos, centeredPos, placeSettings, random, Block.UPDATE_CLIENTS);
+		placeSettings.clearProcessors()
+			.addProcessor(new BlockRotProcessor(0.25F))
+			.setRandom(random);
+
+		emptyTemplate.placeInWorld(level, centeredPos, centeredPos, placeSettings, level.getRandom(), Block.UPDATE_CLIENTS);
+
+	}
+
+	protected void cacheTemplate(ServerLevel level) {
+
+		StructureTemplateManager templateManager = level.getStructureManager();
+		StructureTemplate template = templateManager.get(STRUCTURE_ID).orElse(null);
+
+		if (template == null || Objects.equals(this.spireTemplate, template)) {
+			return;
+		}
+
+		StructureTemplate intermediateTemplate = new StructureTemplate();
+
+		for (var originalPalette : ((StructureTemplateAccessor) template).getPalettes()) {
+
+			List<StructureTemplate.StructureBlockInfo> newBlocks = new ObjectArrayList<>();
+
+			for (var oldBlock : originalPalette.blocks()) {
+				newBlocks.add(new StructureTemplate.StructureBlockInfo(oldBlock.pos(), Blocks.AIR.defaultBlockState(), null));
+			}
+
+			((StructureTemplateAccessor) intermediateTemplate).getPalettes().add(StructureTemplatePaletteAccessor.newPalette(newBlocks));
+
+		}
+
+		((StructureTemplateAccessor) intermediateTemplate).setSize(template.getSize());
+
+		this.spireTemplate = template;
+		this.emptyTemplate = intermediateTemplate;
 
 	}
 
@@ -287,7 +357,7 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 						changed = true;
 
 						if (entity.getStep() >= pattern.getHeight()) {
-							entity.placeSpire(serverLevel, OptionalDouble.of(0.75));
+							entity.degenerateSpire(serverLevel);
 							entity.changePhase(ReactorPhase.DEACTIVATED);
 						}
 

@@ -5,6 +5,8 @@
 	"mixins": [
 		"access.BlockPatternAccessor",
 		"access.BlockPatternMatchAccessor",
+		"access.StructureTemplateAccessor",
+		"access.StructureTemplatePaletteAccessor",
 		"impl.core_tooltip.BlockItemStatePropertiesMixin"
 	],
 	"injectors": {
