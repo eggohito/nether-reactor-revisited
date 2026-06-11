@@ -14,6 +14,7 @@ import io.github.eggohito.nether_reactor_revisited.mixin.access.BlockPatternAcce
 import io.github.eggohito.nether_reactor_revisited.mixin.access.BlockPatternMatchAccessor;
 import io.github.eggohito.nether_reactor_revisited.reactor.ReactorPhase;
 import io.github.eggohito.nether_reactor_revisited.reactor.core.CoreState;
+import io.github.eggohito.nether_reactor_revisited.reactor.spawner.BasicItemSpawner;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -46,7 +47,13 @@ import java.util.function.Predicate;
 
 public class ReactorCoreBlockEntity extends BlockEntity {
 
+	private static final Identifier LOOT_TABLE_ID = NetherReactorRevisited.id("spire");
 	private static final Identifier STRUCTURE_ID = NetherReactorRevisited.id("spire");
+
+	private final BasicItemSpawner itemSpawner = new BasicItemSpawner()
+		.lootTable(LOOT_TABLE_ID)
+		.maxNearbyEntities(32)
+		.spawnRange(8);
 
 	private Status status = Status.NORMAL;
 	private int step = 0;
@@ -67,12 +74,14 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 
 	@Override
 	protected void saveAdditional(ValueOutput output) {
+		this.itemSpawner.save(output.child("item_spawner"));
 		output.store("status", Status.CODEC, this.status);
 		output.putInt("step", this.step);
 	}
 
 	@Override
 	protected void loadAdditional(ValueInput input) {
+		input.child("item_spawner").ifPresent(this.itemSpawner::load);
 		this.status = input.read("status", Status.CODEC).orElse(Status.NORMAL);
 		this.step = input.getIntOr("step", 0);
 	}
@@ -190,6 +199,9 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 				boolean patternFailed = pattern.matches(serverLevel, frontTopLeft, Direction.WEST, Direction.UP) == null;
 				boolean maxTimeReached = elapsedTicks >= serverLevel.getGameRules().get(NRRGameRules.STABLE_CORE_LIFETIME);
 
+				entity.itemSpawner.serverTick(serverLevel, pos.below());
+				changed = patternFailed || maxTimeReached;
+
 				if (patternFailed) {
 					entity.changePhase(ReactorPhase.UNSTABLE);
 				}
@@ -197,8 +209,6 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 				else if (maxTimeReached) {
 					entity.changePhase(ReactorPhase.DEACTIVATING);
 				}
-
-				changed = patternFailed || maxTimeReached;
 
 			}
 			case UNSTABLE -> {
