@@ -128,28 +128,32 @@ public final class ReactorEvents {
 
 	public static final CoreInteractionEvent CHECK_ELAPSED_ACTIVE_SECONDS = (level, pos, state, core, user, hand, hitResult, interactionPhase) -> {
 
-		if (level instanceof ServerLevel serverLevel && state.getValue(ReactorCoreBlock.STATE) == CoreState.ACTIVATED) {
+		if (state.getValue(ReactorCoreBlock.STATE) == CoreState.ACTIVATED) {
 
 			ReactorPhase phase = core.getStatus().phase();
 			long elapsedSeconds = (level.getGameTime() - core.getStatus().since()) / 20;
 
-			switch (phase) {
-				case STABLE ->
-					user.sendOverlayMessage(Component.translatable("event.nether-reactor-revisited.elapsed_active_seconds.stable", elapsedSeconds).withStyle(ChatFormatting.RED));
-				case UNSTABLE ->
-					user.sendOverlayMessage(Component.translatable("event.nether-reactor-revisited.elapsed_active_seconds.unstable", ((serverLevel.getGameRules().get(NRRGameRules.UNSTABLE_CORE_LIFETIME) / 20) - elapsedSeconds)).withStyle(ChatFormatting.RED));
-				default -> {
-					return InteractionResult.CONSUME;
+			if (phase == ReactorPhase.UNSTABLE || phase == ReactorPhase.STABLE) {
+
+				if (level instanceof ServerLevel serverLevel) {
+
+					if (phase == ReactorPhase.UNSTABLE) {
+						user.sendOverlayMessage(Component.translatable("event.nether-reactor-revisited.elapsed_active_seconds.unstable", (serverLevel.getGameRules().get(NRRGameRules.UNSTABLE_CORE_LIFETIME) / 20) - elapsedSeconds).withStyle(ChatFormatting.RED));
+					}
+
+					else {
+						user.sendOverlayMessage(Component.translatable("event.nether-reactor-revisited.elapsed_active_seconds.stable", elapsedSeconds).withStyle(ChatFormatting.RED));
+					}
+
 				}
+
+				return InteractionResult.CONSUME;
+
 			}
 
-			return InteractionResult.SUCCESS;
-
 		}
 
-		else {
-			return InteractionResult.PASS;
-		}
+		return InteractionResult.PASS;
 
 	};
 
