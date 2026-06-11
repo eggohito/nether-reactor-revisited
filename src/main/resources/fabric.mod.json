@@ -10,7 +10,7 @@
 	"contact": {
 		"sources": "https://github.com/eggohito/nether-reactor-revisited"
 	},
-	"license": "CC0-1.0",
+	"license": "MIT",
 	"icon": "assets/nether-reactor-revisited/icon.png",
 	"environment": "*",
 	"entrypoints": {
