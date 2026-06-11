@@ -100,7 +100,7 @@ public class ReactorCoreBlock extends BaseEntityBlock {
 
 			TypedEntityData<BlockEntityType<?>> blockEntityData = itemStack.get(DataComponents.BLOCK_ENTITY_DATA);
 
-			if (blockEntityData != null && !blockEntityData.contains("status")) {
+			if (blockEntityData == null || !blockEntityData.contains("status")) {
 				reactorCore.copyState(state.getValue(STATE));
 				reactorCore.setChanged();
 			}
