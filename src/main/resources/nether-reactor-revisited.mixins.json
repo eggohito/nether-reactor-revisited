@@ -3,10 +3,12 @@
 	"package": "io.github.eggohito.nether_reactor_revisited.mixin",
 	"compatibilityLevel": "JAVA_25",
 	"mixins": [
+		"access.BaseSpawnerAccessor",
 		"access.BlockPatternAccessor",
 		"access.BlockPatternMatchAccessor",
 		"access.StructureTemplateAccessor",
 		"access.StructureTemplatePaletteAccessor",
+		"impl.aggro_spawner.BaseSpawnerMixin",
 		"impl.core_tooltip.BlockItemStatePropertiesMixin"
 	],
 	"injectors": {

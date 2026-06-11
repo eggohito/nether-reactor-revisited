@@ -15,6 +15,7 @@ import io.github.eggohito.nether_reactor_revisited.mixin.access.StructureTemplat
 import io.github.eggohito.nether_reactor_revisited.mixin.access.StructureTemplatePaletteAccessor;
 import io.github.eggohito.nether_reactor_revisited.reactor.ReactorPhase;
 import io.github.eggohito.nether_reactor_revisited.reactor.core.CoreState;
+import io.github.eggohito.nether_reactor_revisited.reactor.spawner.AggroSpawner;
 import io.github.eggohito.nether_reactor_revisited.reactor.spawner.BasicItemSpawner;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.core.BlockPos;
@@ -30,6 +31,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.clock.ClockTimeMarkers;
 import net.minecraft.world.clock.ServerClockManager;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -55,6 +57,12 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 	private static final Identifier LOOT_TABLE_ID = NetherReactorRevisited.id("spire");
 	private static final Identifier STRUCTURE_ID = NetherReactorRevisited.id("spire");
 
+	private final AggroSpawner mobSpawner = new AggroSpawner()
+		.entityId(EntityType.ZOMBIFIED_PIGLIN)
+		.maxNearbyEntities(8)
+		.maxSpawnDelay(80)
+		.minSpawnDelay(20)
+		.spawnRange(8);
 	private final BasicItemSpawner itemSpawner = new BasicItemSpawner()
 		.lootTable(LOOT_TABLE_ID)
 		.maxNearbyEntities(32)
@@ -82,6 +90,7 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 
 	@Override
 	protected void saveAdditional(ValueOutput output) {
+		this.mobSpawner.save(output.child("mob_spawner"));
 		this.itemSpawner.save(output.child("item_spawner"));
 		output.store("status", Status.CODEC, this.status);
 		output.putInt("step", this.step);
@@ -89,6 +98,7 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 
 	@Override
 	protected void loadAdditional(ValueInput input) {
+		input.child("mob_spawner").ifPresent(child -> this.mobSpawner.load(this.getLevel(), this.getBlockPos(), child));
 		input.child("item_spawner").ifPresent(this.itemSpawner::load);
 		this.status = input.read("status", Status.CODEC).orElse(Status.NORMAL);
 		this.step = input.getIntOr("step", 0);
@@ -136,7 +146,8 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 	}
 
 	public void tickSpawners(ServerLevel level) {
-		itemSpawner.serverTick(level, this.getBlockPos().below());
+		this.mobSpawner.serverTick(level, this.getBlockPos().below());
+		this.itemSpawner.serverTick(level, this.getBlockPos().below());
 	}
 
 	public boolean generateSpire(ServerLevel level) {
