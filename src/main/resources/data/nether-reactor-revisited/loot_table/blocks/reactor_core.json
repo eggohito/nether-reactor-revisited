@@ -3,55 +3,46 @@
 	"pools": [
 		{
 			"rolls": 1.0,
-			"bonus_rolls": 0.0,
-			"random_sequence": "nether-reactor-revisited:blocks/reactor_core",
 			"entries": [
 				{
-					"type": "minecraft:alternatives",
-					"children": [
+					"type": "minecraft:item",
+					"name": "nether-reactor-revisited:reactor_core",
+					"functions": [
 						{
-							"type": "minecraft:item",
-							"name": "nether-reactor-revisited:reactor_core",
+							"function": "minecraft:copy_components",
+							"source": "block_entity",
+							"include": [
+								"minecraft:custom_name"
+							],
 							"conditions": [
 								{
-									"condition": "minecraft:match_tool",
-									"predicate": {
-										"predicates": {
-											"minecraft:enchantments": [
-												{
-													"enchantments": "minecraft:silk_touch",
-													"levels": {
-														"min": 1
-													}
-												}
-											]
+									"condition": "minecraft:inverted",
+									"term": {
+										"condition": "minecraft:block_state_property",
+										"block": "nether-reactor-revisited:reactor_core",
+										"properties": {
+											"state": "normal"
 										}
 									}
-								}
-							],
-							"functions": [
-								{
-									"function": "minecraft:copy_components",
-									"source": "block_entity",
-									"include": [
-										"minecraft:custom_name"
-									]
-								},
-								{
-									"function": "minecraft:copy_state",
-									"block": "nether-reactor-revisited:reactor_core",
-									"properties": [
-										"state"
-									]
 								}
 							]
 						},
 						{
-							"type": "minecraft:loot_table",
-							"value": "nether-reactor-revisited:blocks/reactor_core/disassembled",
+							"function": "minecraft:copy_state",
+							"block": "nether-reactor-revisited:reactor_core",
+							"properties": [
+								"state"
+							],
 							"conditions": [
 								{
-									"condition": "minecraft:survives_explosion"
+									"condition": "minecraft:inverted",
+									"term": {
+										"condition": "minecraft:block_state_property",
+										"block": "nether-reactor-revisited:reactor_core",
+										"properties": {
+											"state": "normal"
+										}
+									}
 								}
 							]
 						}
