@@ -34,6 +34,8 @@ import net.minecraft.world.phys.BlockHitResult;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import java.util.Objects;
+
 public class ReactorCoreBlock extends BaseEntityBlock {
 
 	public static final MapCodec<ReactorCoreBlock> CODEC = simpleCodec(ReactorCoreBlock::new);
@@ -119,7 +121,7 @@ public class ReactorCoreBlock extends BaseEntityBlock {
 		Registry<Enchantment> enchantments = level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT);
 		Holder<Enchantment> silkTouch = enchantments.get(Enchantments.SILK_TOUCH).orElse(null);
 
-		if (silkTouch == null || tool.getEnchantments().getLevel(silkTouch) <= 0) {
+		if (!Objects.equals(state, level.getBlockState(pos)) && (silkTouch == null || tool.getEnchantments().getLevel(silkTouch) <= 0)) {
 			level.explode(null, pos.getX(), pos.getY(), pos.getZ(), 5.0F, Level.ExplosionInteraction.BLOCK);
 		}
 
