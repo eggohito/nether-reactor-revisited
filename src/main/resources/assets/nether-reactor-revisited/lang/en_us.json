@@ -13,6 +13,8 @@
 	"event.nether-reactor-revisited.reactivate.success": "%s reactivated a Nether reactor!",
 	"event.nether-reactor-revisited.too_high": "The Nether reactor needs to be built lower down!",
 	"event.nether-reactor-revisited.too_low": "The Nether reactor needs to be built higher up!",
+	"event.nether-reactor-revisited.freeze_day_cycle": "An active Nether reactor has been interrupted! Day cycle has been frozen",
+	"event.nether-reactor-revisited.restore_day_cycle": "The effect of the interrupted Nether reactor has faded away... Day cycle is resumed",
 	"item.nether-reactor-revisited.reactor_core.phase.tooltip": "Core state: %s",
 	"nether-reactor-revisited.reactor_core.phase.activating": "ACTIVATING",
 	"nether-reactor-revisited.reactor_core.phase.deactivated": "DEACTIVATED",

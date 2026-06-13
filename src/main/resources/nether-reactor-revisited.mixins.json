@@ -9,7 +9,8 @@
 		"access.StructureTemplateAccessor",
 		"access.StructureTemplatePaletteAccessor",
 		"impl.aggro_spawner.BaseSpawnerMixin",
-		"impl.core_tooltip.BlockItemStatePropertiesMixin"
+		"impl.core_tooltip.BlockItemStatePropertiesMixin",
+		"impl.day_cycle_frozen_for.ServerLevelMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

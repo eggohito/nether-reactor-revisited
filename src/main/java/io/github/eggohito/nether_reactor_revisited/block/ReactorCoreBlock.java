@@ -2,10 +2,15 @@ package io.github.eggohito.nether_reactor_revisited.block;
 
 import com.mojang.serialization.MapCodec;
 import io.github.eggohito.nether_reactor_revisited.block.entity.ReactorCoreBlockEntity;
+import io.github.eggohito.nether_reactor_revisited.content.NRRAttachments;
 import io.github.eggohito.nether_reactor_revisited.content.NRRBlockEntities;
+import io.github.eggohito.nether_reactor_revisited.content.NRRGameRules;
 import io.github.eggohito.nether_reactor_revisited.event.BlockInteractionPhase;
 import io.github.eggohito.nether_reactor_revisited.reactor.ReactorPhase;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -22,6 +27,8 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.timeline.Timeline;
+import net.minecraft.world.timeline.Timelines;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -93,16 +100,32 @@ public class ReactorCoreBlock extends BaseEntityBlock {
 			return;
 		}
 
-		switch (reactorCore.phase()) {
-			case ACTIVATING, ACTIVATED_STABLE, DEACTIVATING ->
-				reactorCore.degenerateSpire(level);
-			case ACTIVATED_UNSTABLE -> {
+		ReactorPhase phase = reactorCore.phase();
+		Timeline dayTimeline = level.registryAccess().get(Timelines.OVERWORLD_DAY)
+			.map(Holder.Reference::value)
+			.orElse(null);
 
-				if (!Objects.equals(state, level.getBlockState(pos))) {
-					level.explode(null, pos.getX(), pos.getY(), pos.getZ(), 5.0F, Level.ExplosionInteraction.BLOCK);
-				}
+		if (phase == ReactorPhase.ACTIVATED_UNSTABLE) {
+
+			if (!Objects.equals(state, level.getBlockState(pos))) {
+				level.explode(null, pos.getX(), pos.getY(), pos.getZ(), 5.0F, Level.ExplosionInteraction.BLOCK);
+			}
+
+		}
+
+		else if (phase.isActive() || phase == ReactorPhase.DEACTIVATING) {
+
+			if (phase.isActive() && dayTimeline != null && level.getGameRules().get(NRRGameRules.DAY_CYCLE_FROZEN_FOR) > 0) {
+
+				level.clockManager().setPaused(dayTimeline.clock(), true);
+				level.setAttached(NRRAttachments.LAST_REACTOR_INTERRUPTED_GAME_TIME, level.getGameTime());
+
+				level.getServer().getPlayerList().broadcastSystemMessage(Component.translatable("event.nether-reactor-revisited.freeze_day_cycle").withStyle(ChatFormatting.RED), false);
 
 			}
+
+			reactorCore.degenerateSpire(level);
+
 		}
 
 	}

@@ -17,6 +17,11 @@ public final class NRRGameRules {
 		.minValue(0)
 		.buildAndRegister(NetherReactorRevisited.id("unstable_core_lifetime"));
 
+	public static final GameRule<Integer> DAY_CYCLE_FROZEN_FOR = GameRuleBuilder.forInteger(3)
+		.category(GameRuleCategory.MISC)
+		.minValue(0)
+		.buildAndRegister(NetherReactorRevisited.id("day_cycle_frozen_for"));
+
 	public static void registerAll() {
 
 	}
