@@ -1,8 +1,6 @@
 package io.github.eggohito.nether_reactor_revisited.block.entity;
 
 import com.google.common.cache.LoadingCache;
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.eggohito.nether_reactor_revisited.NetherReactorRevisited;
 import io.github.eggohito.nether_reactor_revisited.block.ReactorCoreBlock;
 import io.github.eggohito.nether_reactor_revisited.content.NRRBlockEntities;
@@ -14,7 +12,6 @@ import io.github.eggohito.nether_reactor_revisited.mixin.access.BlockPatternMatc
 import io.github.eggohito.nether_reactor_revisited.mixin.access.StructureTemplateAccessor;
 import io.github.eggohito.nether_reactor_revisited.mixin.access.StructureTemplatePaletteAccessor;
 import io.github.eggohito.nether_reactor_revisited.reactor.ReactorPhase;
-import io.github.eggohito.nether_reactor_revisited.reactor.core.CoreState;
 import io.github.eggohito.nether_reactor_revisited.reactor.spawner.AggroSpawner;
 import io.github.eggohito.nether_reactor_revisited.reactor.spawner.BasicItemSpawner;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -40,9 +37,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.pattern.BlockInWorld;
 import net.minecraft.world.level.block.state.pattern.BlockPattern;
 import net.minecraft.world.level.levelgen.structure.templatesystem.BlockRotProcessor;
+import net.minecraft.world.level.levelgen.structure.templatesystem.ProtectedBlockProcessor;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
-import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.NotNull;
@@ -72,9 +69,9 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 	private final ThreadLocal<StructureTemplate> spireStructure = new ThreadLocal<>();
 	private final ThreadLocal<StructureTemplate> degenSpireStructure = new ThreadLocal<>();
 
-	private Status status = Status.NORMAL;
-	private Vec3i dimensions = Vec3i.ZERO;
-	private int step = 0;
+	private Vec3i structureDimensions = Vec3i.ZERO;
+	private long lastChangeGameTime = 0L;
+	private int steps = 0;
 
 	public ReactorCoreBlockEntity(BlockPos worldPosition, BlockState blockState) {
 		super(NRRBlockEntities.REACTOR_CORE, worldPosition, blockState);
@@ -94,18 +91,18 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 	protected void saveAdditional(ValueOutput output) {
 		this.mobSpawner.save(output.child("mob_spawner"));
 		this.itemSpawner.save(output.child("item_spawner"));
-		output.store("status", Status.CODEC, this.status);
-		output.store("dimensions", Vec3i.CODEC, this.dimensions);
-		output.putInt("step", this.step);
+		output.store("structure_dimensions", Vec3i.CODEC, this.structureDimensions);
+		output.putLong("last_change_game_time", this.lastChangeGameTime);
+		output.putInt("steps", this.steps);
 	}
 
 	@Override
 	protected void loadAdditional(ValueInput input) {
 		input.child("mob_spawner").ifPresent(child -> this.mobSpawner.load(this.getLevel(), this.getBlockPos(), child));
 		input.child("item_spawner").ifPresent(this.itemSpawner::load);
-		this.status = input.read("status", Status.CODEC).orElse(Status.NORMAL);
-		this.dimensions = input.read("dimensions", Vec3i.CODEC).orElse(Vec3i.ZERO);
-		this.step = input.getIntOr("step", 0);
+		this.structureDimensions = input.read("structure_dimensions", Vec3i.CODEC).orElse(Vec3i.ZERO);
+		this.lastChangeGameTime = input.getLongOr("last_change_game_time", 0L);
+		this.steps = input.getIntOr("steps", 0);
 	}
 
 	@Override
@@ -119,20 +116,20 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 
 	}
 
-	public Status getStatus() {
-		return status;
+	public ReactorPhase phase() {
+		return this.getBlockState().getValue(ReactorCoreBlock.PHASE);
 	}
 
-	public Vec3i getDimensions() {
-		return dimensions;
+	public Vec3i structureDimensions() {
+		return structureDimensions;
 	}
 
-	public int getStep() {
-		return step;
+	public long lastChangeGameTime() {
+		return lastChangeGameTime;
 	}
 
-	public void copyState(CoreState state) {
-		this.changePhase(state.asPhase());
+	public int steps() {
+		return steps;
 	}
 
 	public void trigger() {
@@ -142,7 +139,6 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 		}
 
 		this.changePhase(ReactorPhase.ACTIVATING);
-		serverLevel.setBlock(this.getBlockPos(), this.getBlockState().setValue(ReactorCoreBlock.STATE, CoreState.ACTIVATED), Block.UPDATE_CLIENTS);
 
 		ServerClockManager clockManager = serverLevel.clockManager();
 		serverLevel.dimensionType()
@@ -164,10 +160,14 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 			return false;
 		}
 
-		Vec3i size = spireStructure.get().getSize();
-		BlockPos centeredPos = this.getBlockPos().offset(-size.getX() / 2, -2, -size.getZ() / 2);
+		RandomSource random = level.getRandom();
+		BlockPos centeredPos = this.getBlockPos().offset(-this.structureDimensions().getX() / 2, -2, -this.structureDimensions().getZ() / 2);
 
 		return spireStructure.get().placeInWorld(level, centeredPos, centeredPos, new StructurePlaceSettings(), level.getRandom(), Block.UPDATE_CLIENTS);
+		StructurePlaceSettings placeSettings = new StructurePlaceSettings().clearProcessors()
+			.setRandom(random);
+
+		return spireStructure.get().placeInWorld(level, centeredPos, centeredPos, placeSettings, random, Block.UPDATE_CLIENTS);
 
 	}
 
@@ -177,55 +177,64 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 			return;
 		}
 
-		Vec3i size = degenSpireStructure.get().getSize();
-		BlockPos centeredPos = this.getBlockPos().offset(-size.getX() / 2, -2, -size.getZ() / 2);
-
 		RandomSource random = level.getRandom();
-		StructurePlaceSettings placeSettings = new StructurePlaceSettings();
+		BlockPos centeredPos = this.getBlockPos().offset(-this.structureDimensions().getX() / 2, -2, -this.structureDimensions().getZ() / 2);
 
-		placeSettings.clearProcessors()
+		StructurePlaceSettings placeSettings = new StructurePlaceSettings().clearProcessors()
 			.addProcessor(new BlockRotProcessor(0.25F))
 			.setRandom(random);
 
-		degenSpireStructure.get().placeInWorld(level, centeredPos, centeredPos, placeSettings, level.getRandom(), Block.UPDATE_CLIENTS);
+		degenSpireStructure.get().placeInWorld(level, centeredPos, centeredPos, placeSettings, random, Block.UPDATE_CLIENTS);
 
 	}
 
-	protected boolean cacheTemplates(ServerLevel level) {
+	protected boolean cacheStructures(ServerLevel level) {
 
-		StructureTemplateManager templateManager = level.getStructureManager();
-		StructureTemplate template = templateManager.get(STRUCTURE_ID).orElse(null);
+		StructureTemplate structure = level.getStructureManager().get(STRUCTURE_ID).orElse(null);
+		StructureTemplate intermediate = new StructureTemplate();
 
-		if (template == null || Objects.equals(spireStructure.get(), template)) {
+		if (Objects.equals(spireStructure.get(), structure)) {
 			return false;
 		}
 
-		StructureTemplate intermediateTemplate = new StructureTemplate();
+		else if (structure != null) {
 
-		for (var originalPalette : ((StructureTemplateAccessor) template).getPalettes()) {
+			for (var palette : ((StructureTemplateAccessor) structure).getPalettes()) {
 
-			List<StructureTemplate.StructureBlockInfo> newBlocks = new ObjectArrayList<>();
+				List<StructureTemplate.StructureBlockInfo> convertedBlocks = new ObjectArrayList<>();
 
-			for (var oldBlock : originalPalette.blocks()) {
-				newBlocks.add(new StructureTemplate.StructureBlockInfo(oldBlock.pos(), Blocks.AIR.defaultBlockState(), null));
+				for (var block : palette.blocks()) {
+					convertedBlocks.add(new StructureTemplate.StructureBlockInfo(block.pos(), Blocks.AIR.defaultBlockState(), null));
+				}
+
+				((StructureTemplateAccessor) intermediate).getPalettes().add(StructureTemplatePaletteAccessor.newPalette(convertedBlocks));
+
 			}
 
-			((StructureTemplateAccessor) intermediateTemplate).getPalettes().add(StructureTemplatePaletteAccessor.newPalette(newBlocks));
+			((StructureTemplateAccessor) intermediate).setSize(structure.getSize());
+
+			this.spireStructure.set(structure);
+			this.degenSpireStructure.set(intermediate);
+
+			this.structureDimensions = structure.getSize();
 
 		}
 
-		((StructureTemplateAccessor) intermediateTemplate).setSize(template.getSize());
+		else {
 
-		this.dimensions = template.getSize();
-		this.spireStructure.set(template);
-		this.degenSpireStructure.set(intermediateTemplate);
+			this.spireStructure.remove();
+			this.degenSpireStructure.remove();
+
+			this.structureDimensions = Vec3i.ZERO;
+
+		}
 
 		return true;
 
 	}
 
 	protected void step() {
-		this.step = Math.min(this.getStep() + 1, this.getStatus().pattern().getHeight());
+		this.steps = Math.min(this.steps() + 1, this.phase().getPattern().getHeight());
 	}
 
 	protected void changePhase(ReactorPhase phase) {
@@ -234,8 +243,9 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 			return;
 		}
 
-		this.status = new Status(phase, this.getLevel().getGameTime());
-		this.step = 0;
+		this.getLevel().setBlock(this.getBlockPos(), this.getBlockState().setValue(ReactorCoreBlock.PHASE, phase), Block.UPDATE_CLIENTS);
+		this.lastChangeGameTime = this.getLevel().getGameTime();
+		this.steps = 0;
 
 	}
 
@@ -245,8 +255,8 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 
 	protected void replaceLayerWith(Level level, LoadingCache<BlockPos, BlockInWorld> levelCache, BlockPos frontTopLeft, Direction forwards, Direction up, Predicate<BlockInWorld> predicate, BlockState replacementState, int layerY) {
 
-		for (int x = 0; x < status.pattern().getWidth(); x++) {
-			for (int z = 0; z < status.pattern().getDepth(); z++) {
+		for (int x = 0; x < phase().getPattern().getWidth(); x++) {
+			for (int z = 0; z < phase().getPattern().getDepth(); z++) {
 
 				BlockPos pos = BlockPatternAccessor.callTranslateAndRotate(frontTopLeft, forwards, up, x, layerY, z);
 				BlockInWorld matchedBlock = levelCache.getUnchecked(pos);
@@ -266,20 +276,20 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 			return;
 		}
 
-		BlockPattern pattern = entity.getStatus().pattern();
+		BlockPattern pattern = entity.phase().getPattern();
 		BlockPos frontTopLeft = pos.offset(pattern.getWidth() / 3, pattern.getHeight() / 3, pattern.getDepth() / 3);
 
-		boolean changed = entity.cacheTemplates(serverLevel);
-		long elapsedTicks = serverLevel.getGameTime() - entity.getStatus().since();
+		boolean changed = entity.cacheStructures(serverLevel);
+		long elapsedTicks = serverLevel.getGameTime() - entity.lastChangeGameTime();
 
-		switch (entity.getStatus().phase()) {
-			case STABLE -> {
+		switch (entity.phase()) {
+			case ACTIVATED_STABLE -> {
 
 				boolean patternFailed = pattern.matches(serverLevel, frontTopLeft, Direction.WEST, Direction.UP) == null;
 				boolean maxTimeReached = elapsedTicks >= serverLevel.getGameRules().get(NRRGameRules.STABLE_CORE_LIFETIME);
 
 				if (patternFailed) {
-					entity.changePhase(ReactorPhase.UNSTABLE);
+					entity.changePhase(ReactorPhase.ACTIVATED_UNSTABLE);
 				}
 
 				else if (maxTimeReached) {
@@ -293,7 +303,7 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 				changed = patternFailed || maxTimeReached;
 
 			}
-			case UNSTABLE -> {
+			case ACTIVATED_UNSTABLE -> {
 
 				if (elapsedTicks >= serverLevel.getGameRules().get(NRRGameRules.UNSTABLE_CORE_LIFETIME)) {
 					serverLevel.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
@@ -309,10 +319,10 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 					changed = true;
 
 					if (match == null) {
-						entity.changePhase(ReactorPhase.UNSTABLE);
+						entity.changePhase(ReactorPhase.ACTIVATED_UNSTABLE);
 					}
 
-					else if (entity.step >= pattern.getHeight()) {
+					else if (entity.steps() >= pattern.getHeight()) {
 
 						entity.replaceLayerWith(
 							serverLevel,
@@ -322,7 +332,7 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 							pattern.getHeight() - 1
 						);
 
-						entity.changePhase(ReactorPhase.STABLE);
+						entity.changePhase(ReactorPhase.ACTIVATED_STABLE);
 
 					}
 
@@ -333,7 +343,7 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 							match,
 							BlockInWorld.hasState(matched -> matched.is(NRRBlockTags.ACTIVATING_REACTOR_BLOCKS)),
 							NRRBlocks.GLOWING_OBSIDIAN.defaultBlockState(),
-							(pattern.getHeight() - 1) - entity.getStep()
+							(pattern.getHeight() - 1) - entity.steps()
 						);
 
 						entity.step();
@@ -347,32 +357,24 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 
 				if (elapsedTicks % 20 == 0) {
 
-					if (state.getValue(ReactorCoreBlock.STATE) != CoreState.DEACTIVATED) {
-						serverLevel.setBlock(pos, state.setValue(ReactorCoreBlock.STATE, CoreState.DEACTIVATED), Block.UPDATE_CLIENTS);
-					}
+					LoadingCache<BlockPos, BlockInWorld> levelCache = BlockPattern.createLevelCache(serverLevel, false);
+					entity.replaceLayerWith(
+						serverLevel,
+						levelCache,
+						frontTopLeft,
+						Direction.WEST,
+						Direction.UP,
+						BlockInWorld.hasState(Predicate.not(_state -> _state.is(NRRBlocks.REACTOR_CORE))),
+						Blocks.OBSIDIAN.defaultBlockState(),
+						entity.steps()
+					);
 
-					else {
+					entity.step();
+					changed = true;
 
-						LoadingCache<BlockPos, BlockInWorld> levelCache = BlockPattern.createLevelCache(serverLevel, false);
-						entity.replaceLayerWith(
-							serverLevel,
-							levelCache,
-							frontTopLeft,
-							Direction.WEST,
-							Direction.UP,
-							BlockInWorld.hasState(Predicate.not(_state -> _state.is(NRRBlocks.REACTOR_CORE))),
-							Blocks.OBSIDIAN.defaultBlockState(),
-							entity.getStep()
-						);
-
-						entity.step();
-						changed = true;
-
-						if (entity.getStep() >= pattern.getHeight()) {
-							entity.degenerateSpire(serverLevel);
-							entity.changePhase(ReactorPhase.DEACTIVATED);
-						}
-
+					if (entity.steps() >= pattern.getHeight()) {
+						entity.degenerateSpire(serverLevel);
+						entity.changePhase(ReactorPhase.DEACTIVATED);
 					}
 
 				}
@@ -385,21 +387,6 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 
 		if (changed) {
 			entity.setChanged();
-		}
-
-	}
-
-	public record Status(ReactorPhase phase, long since) {
-
-		public static final Status NORMAL = new Status(ReactorPhase.NORMAL, 0L);
-
-		public static final Codec<Status> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-			ReactorPhase.CODEC.fieldOf("phase").forGetter(Status::phase),
-			Codec.LONG.fieldOf("since").forGetter(Status::since)
-		).apply(instance, Status::new));
-
-		public BlockPattern pattern() {
-			return phase().getPattern();
 		}
 
 	}

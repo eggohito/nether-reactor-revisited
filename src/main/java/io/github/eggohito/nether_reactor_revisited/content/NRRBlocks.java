@@ -3,7 +3,6 @@ package io.github.eggohito.nether_reactor_revisited.content;
 import io.github.eggohito.nether_reactor_revisited.NetherReactorRevisited;
 import io.github.eggohito.nether_reactor_revisited.block.GlowingObsidianBlock;
 import io.github.eggohito.nether_reactor_revisited.block.ReactorCoreBlock;
-import io.github.eggohito.nether_reactor_revisited.reactor.core.CoreState;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.block.Block;
@@ -22,7 +21,7 @@ public final class NRRBlocks {
 		ReactorCoreBlock::new,
 		BlockBehaviour.Properties.of()
 			.strength(3.0F)
-			.lightLevel(state -> state.getValue(ReactorCoreBlock.STATE) == CoreState.ACTIVATED ? 2 : 0)
+			.lightLevel(state -> state.getValue(ReactorCoreBlock.PHASE).isActive() ? 2 : 0)
 			.sound(SoundType.METAL)
 			.requiresCorrectToolForDrops()
 	);

@@ -5,7 +5,6 @@ import io.github.eggohito.nether_reactor_revisited.block.entity.ReactorCoreBlock
 import io.github.eggohito.nether_reactor_revisited.content.NRRGameRules;
 import io.github.eggohito.nether_reactor_revisited.event.BlockInteractionPhase;
 import io.github.eggohito.nether_reactor_revisited.event.CoreInteractionEvent;
-import io.github.eggohito.nether_reactor_revisited.reactor.core.CoreState;
 import net.fabricmc.fabric.api.tag.convention.v2.ConventionalItemTags;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -21,15 +20,15 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-public final class ReactorEvents {
+public interface ReactorEvents {
 
-	public static final CoreInteractionEvent REACTOR_TOO_HIGH = (level, pos, state, core, user, hand, hitResult, interactionPhase) -> {
+	CoreInteractionEvent REACTOR_TOO_HIGH = (level, pos, state, core, user, hand, hitResult, interactionPhase) -> {
 
-		if ((interactionPhase != BlockInteractionPhase.WITH_ITEM || state.getValue(ReactorCoreBlock.STATE) != CoreState.DEACTIVATED) && (interactionPhase != BlockInteractionPhase.WITHOUT_ITEM || state.getValue(ReactorCoreBlock.STATE) != CoreState.NORMAL)) {
+		if ((interactionPhase != BlockInteractionPhase.WITH_ITEM || state.getValue(ReactorCoreBlock.PHASE) != ReactorPhase.DEACTIVATING) && (interactionPhase != BlockInteractionPhase.WITHOUT_ITEM || state.getValue(ReactorCoreBlock.PHASE) != ReactorPhase.NORMAL)) {
 			return InteractionResult.PASS;
 		}
 
-		else if (pos.getY() + core.getDimensions().getY() >= level.getMaxY()) {
+		else if (pos.getY() + core.structureDimensions().getY() >= level.getMaxY()) {
 			user.sendOverlayMessage(Component.translatable("event.nether-reactor-revisited.too_high").withStyle(ChatFormatting.RED));
 			return InteractionResult.CONSUME;
 		}
@@ -40,9 +39,9 @@ public final class ReactorEvents {
 
 	};
 
-	public static final CoreInteractionEvent REACTOR_TOO_LOW = (level, pos, state, core, user, hand, hitResult, interactionPhase) -> {
+	CoreInteractionEvent REACTOR_TOO_LOW = (level, pos, state, core, user, hand, hitResult, interactionPhase) -> {
 
-		if ((interactionPhase != BlockInteractionPhase.WITH_ITEM || state.getValue(ReactorCoreBlock.STATE) != CoreState.DEACTIVATED) && (interactionPhase != BlockInteractionPhase.WITHOUT_ITEM || state.getValue(ReactorCoreBlock.STATE) != CoreState.NORMAL)) {
+		if ((interactionPhase != BlockInteractionPhase.WITH_ITEM || state.getValue(ReactorCoreBlock.PHASE) != ReactorPhase.DEACTIVATING) && (interactionPhase != BlockInteractionPhase.WITHOUT_ITEM || state.getValue(ReactorCoreBlock.PHASE) != ReactorPhase.NORMAL)) {
 			return InteractionResult.PASS;
 		}
 
@@ -57,9 +56,9 @@ public final class ReactorEvents {
 
 	};
 
-	public static final CoreInteractionEvent CHECK_IF_LEVEL_WITH_REACTOR = (level, pos, state, core, user, hand, hitResult, interactionPhase) -> {
+	CoreInteractionEvent CHECK_IF_LEVEL_WITH_REACTOR = (level, pos, state, core, user, hand, hitResult, interactionPhase) -> {
 
-		if ((interactionPhase != BlockInteractionPhase.WITH_ITEM || state.getValue(ReactorCoreBlock.STATE) != CoreState.DEACTIVATED) && (interactionPhase != BlockInteractionPhase.WITHOUT_ITEM || state.getValue(ReactorCoreBlock.STATE) != CoreState.NORMAL)) {
+		if ((interactionPhase != BlockInteractionPhase.WITH_ITEM || state.getValue(ReactorCoreBlock.PHASE) != ReactorPhase.DEACTIVATING) && (interactionPhase != BlockInteractionPhase.WITHOUT_ITEM || state.getValue(ReactorCoreBlock.PHASE) != ReactorPhase.NORMAL)) {
 			return InteractionResult.PASS;
 		}
 
@@ -74,9 +73,9 @@ public final class ReactorEvents {
 
 	};
 
-	public static final CoreInteractionEvent CHECK_FOR_OTHER_NEARBY_REACTORS = (level, pos, state, core, user, hand, hitResult, interactionPhase) -> {
+	CoreInteractionEvent CHECK_FOR_OTHER_NEARBY_REACTORS = (level, pos, state, core, user, hand, hitResult, interactionPhase) -> {
 
-		if ((interactionPhase != BlockInteractionPhase.WITH_ITEM || state.getValue(ReactorCoreBlock.STATE) != CoreState.DEACTIVATED) && (interactionPhase != BlockInteractionPhase.WITHOUT_ITEM || state.getValue(ReactorCoreBlock.STATE) != CoreState.NORMAL)) {
+		if ((interactionPhase != BlockInteractionPhase.WITH_ITEM || state.getValue(ReactorCoreBlock.PHASE) != ReactorPhase.DEACTIVATING) && (interactionPhase != BlockInteractionPhase.WITHOUT_ITEM || state.getValue(ReactorCoreBlock.PHASE) != ReactorPhase.NORMAL)) {
 			return InteractionResult.PASS;
 		}
 
@@ -102,9 +101,9 @@ public final class ReactorEvents {
 
 	};
 
-	public static final CoreInteractionEvent CHECK_IF_NEARBY_PLAYERS_ARE_TOO_FAR = (level, pos, state, core, user, hand, hitResult, interactionPhase) -> {
+	CoreInteractionEvent CHECK_IF_NEARBY_PLAYERS_ARE_TOO_FAR = (level, pos, state, core, user, hand, hitResult, interactionPhase) -> {
 
-		if ((interactionPhase != BlockInteractionPhase.WITH_ITEM || state.getValue(ReactorCoreBlock.STATE) != CoreState.DEACTIVATED) && (interactionPhase != BlockInteractionPhase.WITHOUT_ITEM || state.getValue(ReactorCoreBlock.STATE) != CoreState.NORMAL)) {
+		if ((interactionPhase != BlockInteractionPhase.WITH_ITEM || state.getValue(ReactorCoreBlock.PHASE) != ReactorPhase.DEACTIVATING) && (interactionPhase != BlockInteractionPhase.WITHOUT_ITEM || state.getValue(ReactorCoreBlock.PHASE) != ReactorPhase.NORMAL)) {
 			return InteractionResult.PASS;
 		}
 
@@ -126,30 +125,26 @@ public final class ReactorEvents {
 
 	};
 
-	public static final CoreInteractionEvent CHECK_ELAPSED_ACTIVE_SECONDS = (level, pos, state, core, user, hand, hitResult, interactionPhase) -> {
+	CoreInteractionEvent CHECK_ELAPSED_ACTIVE_SECONDS = (level, pos, state, core, user, hand, hitResult, interactionPhase) -> {
 
-		if (state.getValue(ReactorCoreBlock.STATE) == CoreState.ACTIVATED) {
+		ReactorPhase phase = core.phase();
+		long elapsedSeconds = (level.getGameTime() - core.lastChangeGameTime()) / 20;
 
-			ReactorPhase phase = core.getStatus().phase();
-			long elapsedSeconds = (level.getGameTime() - core.getStatus().since()) / 20;
+		if (phase == ReactorPhase.ACTIVATED_UNSTABLE || phase == ReactorPhase.ACTIVATED_STABLE) {
 
-			if (phase == ReactorPhase.UNSTABLE || phase == ReactorPhase.STABLE) {
+			if (level instanceof ServerLevel serverLevel) {
 
-				if (level instanceof ServerLevel serverLevel) {
-
-					if (phase == ReactorPhase.UNSTABLE) {
-						user.sendOverlayMessage(Component.translatable("event.nether-reactor-revisited.elapsed_active_seconds.unstable", (serverLevel.getGameRules().get(NRRGameRules.UNSTABLE_CORE_LIFETIME) / 20) - elapsedSeconds).withStyle(ChatFormatting.RED));
-					}
-
-					else {
-						user.sendOverlayMessage(Component.translatable("event.nether-reactor-revisited.elapsed_active_seconds.stable", elapsedSeconds).withStyle(ChatFormatting.RED));
-					}
-
+				if (phase == ReactorPhase.ACTIVATED_UNSTABLE) {
+					user.sendOverlayMessage(Component.translatable("event.nether-reactor-revisited.elapsed_active_seconds.unstable", (serverLevel.getGameRules().get(NRRGameRules.UNSTABLE_CORE_LIFETIME) / 20) - elapsedSeconds).withStyle(ChatFormatting.RED));
 				}
 
-				return InteractionResult.CONSUME;
+				else {
+					user.sendOverlayMessage(Component.translatable("event.nether-reactor-revisited.elapsed_active_seconds.stable", elapsedSeconds).withStyle(ChatFormatting.RED));
+				}
 
 			}
+
+			return InteractionResult.CONSUME;
 
 		}
 
@@ -157,9 +152,9 @@ public final class ReactorEvents {
 
 	};
 
-	public static final CoreInteractionEvent ACTIVATE = (level, pos, state, core, user, hand, hitResult, interactionPhase) -> {
+	CoreInteractionEvent ACTIVATE = (level, pos, state, core, user, hand, hitResult, interactionPhase) -> {
 
-		if (interactionPhase != BlockInteractionPhase.WITHOUT_ITEM || core.getStatus().phase() != ReactorPhase.NORMAL) {
+		if (interactionPhase != BlockInteractionPhase.WITHOUT_ITEM || core.phase() != ReactorPhase.NORMAL) {
 			return InteractionResult.PASS;
 		}
 
@@ -181,9 +176,9 @@ public final class ReactorEvents {
 
 	};
 
-	public static final CoreInteractionEvent REACTIVATE = (level, pos, state, core, user, hand, hitResult, interactionPhase) -> {
+	CoreInteractionEvent REACTIVATE = (level, pos, state, core, user, hand, hitResult, interactionPhase) -> {
 
-		if (interactionPhase != BlockInteractionPhase.WITH_ITEM || core.getStatus().phase() != ReactorPhase.DEACTIVATED) {
+		if (interactionPhase != BlockInteractionPhase.WITH_ITEM || core.phase() != ReactorPhase.DEACTIVATED) {
 			return InteractionResult.PASS;
 		}
 
@@ -227,7 +222,7 @@ public final class ReactorEvents {
 		Direction oppositeFacing = facing.getOpposite();
 
 		BlockPos frontTopLeftPos = pos.relative(oppositeFacing).offset(-oppositeFacing.getStepZ(), 1, oppositeFacing.getStepX());
-		return core.getStatus().pattern().matches(level, frontTopLeftPos, facing, Direction.UP) != null;
+		return core.phase().getPattern().matches(level, frontTopLeftPos, facing, Direction.UP) != null;
 
 	}
 

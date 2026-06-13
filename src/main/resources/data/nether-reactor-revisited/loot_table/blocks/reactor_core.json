@@ -5,44 +5,88 @@
 			"rolls": 1.0,
 			"entries": [
 				{
-					"type": "minecraft:item",
-					"name": "nether-reactor-revisited:reactor_core",
-					"functions": [
+					"type": "minecraft:alternatives",
+					"children": [
 						{
-							"function": "minecraft:copy_components",
-							"source": "block_entity",
-							"include": [
-								"minecraft:custom_name"
-							],
+							"type": "minecraft:item",
+							"name": "nether-reactor-revisited:reactor_core",
 							"conditions": [
 								{
-									"condition": "minecraft:inverted",
-									"term": {
-										"condition": "minecraft:block_state_property",
-										"block": "nether-reactor-revisited:reactor_core",
-										"properties": {
-											"state": "normal"
-										}
+									"condition": "minecraft:block_state_property",
+									"block": "nether-reactor-revisited:reactor_core",
+									"properties": {
+										"phase": "normal"
 									}
 								}
 							]
 						},
 						{
-							"function": "minecraft:copy_state",
-							"block": "nether-reactor-revisited:reactor_core",
-							"properties": [
-								"state"
+							"type": "minecraft:item",
+							"name": "nether-reactor-revisited:reactor_core",
+							"functions": [
+								{
+									"function": "minecraft:set_components",
+									"components": {
+										"minecraft:block_state": {
+											"phase": "deactivated"
+										}
+									}
+								}
 							],
 							"conditions": [
 								{
-									"condition": "minecraft:inverted",
-									"term": {
-										"condition": "minecraft:block_state_property",
-										"block": "nether-reactor-revisited:reactor_core",
-										"properties": {
-											"state": "normal"
+									"condition": "minecraft:any_of",
+									"terms": [
+										{
+											"condition": "minecraft:block_state_property",
+											"block": "nether-reactor-revisited:reactor_core",
+											"properties": {
+												"phase": "deactivating"
+											}
+										},
+										{
+											"condition": "minecraft:block_state_property",
+											"block": "nether-reactor-revisited:reactor_core",
+											"properties": {
+												"phase": "deactivated"
+											}
+										}
+									]
+								}
+							]
+						},
+						{
+							"type": "minecraft:item",
+							"name": "nether-reactor-revisited:reactor_core",
+							"functions": [
+								{
+									"function": "minecraft:set_components",
+									"components": {
+										"minecraft:block_state": {
+											"phase": "activated_unstable"
 										}
 									}
+								}
+							],
+							"conditions": [
+								{
+									"condition": "minecraft:any_of",
+									"terms": [
+										{
+											"condition": "minecraft:block_state_property",
+											"block": "nether-reactor-revisited:reactor_core",
+											"properties": {
+												"phase": "activating"
+											}
+										},
+										{
+											"condition": "minecraft:block_state_property",
+											"block": "nether-reactor-revisited:reactor_core",
+											"properties": {
+												"phase": "activated_stable"
+											}
+										}
+									]
 								}
 							]
 						}

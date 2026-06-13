@@ -13,8 +13,11 @@
 	"event.nether-reactor-revisited.reactivate.success": "%s reactivated a Nether reactor!",
 	"event.nether-reactor-revisited.too_high": "The Nether reactor needs to be built lower down!",
 	"event.nether-reactor-revisited.too_low": "The Nether reactor needs to be built higher up!",
-	"nether-reactor-revisited.reactor_core.state.activated": "ACTIVATED",
-	"nether-reactor-revisited.reactor_core.state.deactivated": "DEACTIVATED",
-	"nether-reactor-revisited.reactor_core.state.normal": "NORMAL",
-	"nether-reactor-revisited.reactor_core.state.tooltip": "Core state: %s"
+	"item.nether-reactor-revisited.reactor_core.phase.tooltip": "Core state: %s",
+	"nether-reactor-revisited.reactor_core.phase.activating": "ACTIVATING",
+	"nether-reactor-revisited.reactor_core.phase.deactivated": "DEACTIVATED",
+	"nether-reactor-revisited.reactor_core.phase.deactivating": "DEACTIVATING",
+	"nether-reactor-revisited.reactor_core.phase.normal": "NORMAL",
+	"nether-reactor-revisited.reactor_core.phase.activated_stable": "ACTIVATED (STABLE)",
+	"nether-reactor-revisited.reactor_core.phase.activated_unstable": "ACTIVATED (UNSTABLE)"
 }

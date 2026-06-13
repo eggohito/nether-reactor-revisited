@@ -5,21 +5,12 @@ import io.github.eggohito.nether_reactor_revisited.block.entity.ReactorCoreBlock
 import io.github.eggohito.nether_reactor_revisited.content.NRRBlockEntities;
 import io.github.eggohito.nether_reactor_revisited.event.BlockInteractionPhase;
 import io.github.eggohito.nether_reactor_revisited.reactor.ReactorPhase;
-import io.github.eggohito.nether_reactor_revisited.reactor.core.CoreState;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
-import net.minecraft.core.Registry;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.TypedEntityData;
-import net.minecraft.world.item.enchantment.Enchantment;
-import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
@@ -39,11 +30,11 @@ import java.util.Objects;
 public class ReactorCoreBlock extends BaseEntityBlock {
 
 	public static final MapCodec<ReactorCoreBlock> CODEC = simpleCodec(ReactorCoreBlock::new);
-	public static final Property<CoreState> STATE = EnumProperty.create("state", CoreState.class);
+	public static final Property<ReactorPhase> PHASE = EnumProperty.create("phase", ReactorPhase.class);
 
 	public ReactorCoreBlock(Properties properties) {
 		super(properties);
-		this.registerDefaultState(this.defaultBlockState().setValue(STATE, CoreState.NORMAL));
+		this.registerDefaultState(this.defaultBlockState().setValue(PHASE, ReactorPhase.NORMAL));
 	}
 
 	@Override
@@ -53,7 +44,7 @@ public class ReactorCoreBlock extends BaseEntityBlock {
 
 	@Override
 	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-		builder.add(STATE);
+		builder.add(PHASE);
 	}
 
 	@Override
@@ -61,7 +52,7 @@ public class ReactorCoreBlock extends BaseEntityBlock {
 
 		if (level.getBlockEntity(pos) instanceof ReactorCoreBlockEntity reactorCore) {
 
-			var result = state.getValue(STATE).triggerEvent(level, pos, state, reactorCore, player, hand, hitResult, BlockInteractionPhase.WITH_ITEM);
+			var result = reactorCore.phase().tryTrigger(level, pos, state, reactorCore, player, hand, hitResult, BlockInteractionPhase.WITH_ITEM);
 
 			if (result != null) {
 				return result;
@@ -78,7 +69,7 @@ public class ReactorCoreBlock extends BaseEntityBlock {
 
 		if (level.getBlockEntity(pos) instanceof ReactorCoreBlockEntity reactorCore) {
 
-			var result = state.getValue(STATE).triggerEvent(level, pos, state, reactorCore, player, InteractionHand.MAIN_HAND, hitResult, BlockInteractionPhase.WITHOUT_ITEM);
+			var result = reactorCore.phase().tryTrigger(level, pos, state, reactorCore, player, InteractionHand.MAIN_HAND, hitResult, BlockInteractionPhase.WITHOUT_ITEM);
 
 			if (result != null) {
 				return result;
@@ -96,33 +87,22 @@ public class ReactorCoreBlock extends BaseEntityBlock {
 	}
 
 	@Override
-	public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity by, ItemStack itemStack) {
-
-		if (level.getBlockEntity(pos) instanceof ReactorCoreBlockEntity reactorCore) {
-
-			TypedEntityData<BlockEntityType<?>> blockEntityData = itemStack.get(DataComponents.BLOCK_ENTITY_DATA);
-
-			if (blockEntityData == null || !blockEntityData.contains("status")) {
-				reactorCore.copyState(state.getValue(STATE));
-				reactorCore.setChanged();
-			}
-
-		}
-
-	}
-
-	@Override
 	protected void spawnAfterBreak(BlockState state, ServerLevel level, BlockPos pos, ItemStack tool, boolean dropExperience) {
 
-		if (state.getValue(STATE) != CoreState.ACTIVATED || !(level.getBlockEntity(pos) instanceof ReactorCoreBlockEntity reactorCore) || reactorCore.getStatus().phase() != ReactorPhase.UNSTABLE) {
+		if (!(level.getBlockEntity(pos) instanceof ReactorCoreBlockEntity reactorCore)) {
 			return;
 		}
 
-		Registry<Enchantment> enchantments = level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT);
-		Holder<Enchantment> silkTouch = enchantments.get(Enchantments.SILK_TOUCH).orElse(null);
+		switch (reactorCore.phase()) {
+			case ACTIVATING, ACTIVATED_STABLE, DEACTIVATING ->
+				reactorCore.degenerateSpire(level);
+			case ACTIVATED_UNSTABLE -> {
 
-		if (!Objects.equals(state, level.getBlockState(pos)) && (silkTouch == null || tool.getEnchantments().getLevel(silkTouch) <= 0)) {
-			level.explode(null, pos.getX(), pos.getY(), pos.getZ(), 5.0F, Level.ExplosionInteraction.BLOCK);
+				if (!Objects.equals(state, level.getBlockState(pos))) {
+					level.explode(null, pos.getX(), pos.getY(), pos.getZ(), 5.0F, Level.ExplosionInteraction.BLOCK);
+				}
+
+			}
 		}
 
 	}

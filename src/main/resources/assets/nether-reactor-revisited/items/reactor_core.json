@@ -2,17 +2,24 @@
 	"model": {
 		"type": "minecraft:select",
 		"property": "minecraft:block_state",
-		"block_state_property": "state",
+		"block_state_property": "phase",
 		"cases": [
 			{
-				"when": "activated",
+				"when": [
+					"activating",
+					"activated_stable",
+					"activated_unstable"
+				],
 				"model": {
 					"type": "minecraft:model",
 					"model": "nether-reactor-revisited:block/reactor_core/activated"
 				}
 			},
 			{
-				"when": "deactivated",
+				"when": [
+					"deactivating",
+					"deactivated"
+				],
 				"model": {
 					"type": "minecraft:model",
 					"model": "nether-reactor-revisited:block/reactor_core/deactivated"

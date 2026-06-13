@@ -1,13 +1,45 @@
 {
-	"variants": {
-		"state=normal": {
-			"model": "nether-reactor-revisited:block/reactor_core/normal"
+	"multipart": [
+		{
+			"when": {
+				"phase": "normal"
+			},
+			"apply": {
+				"model": "nether-reactor-revisited:block/reactor_core/normal"
+			}
 		},
-		"state=activated": {
-			"model": "nether-reactor-revisited:block/reactor_core/activated"
+		{
+			"when": {
+				"OR": [
+					{
+						"phase": "activating"
+					},
+					{
+						"phase": "activated_stable"
+					},
+					{
+						"phase": "activated_unstable"
+					}
+				]
+			},
+			"apply": {
+				"model": "nether-reactor-revisited:block/reactor_core/activated"
+			}
 		},
-		"state=deactivated": {
-			"model": "nether-reactor-revisited:block/reactor_core/deactivated"
+		{
+			"when": {
+				"OR": [
+					{
+						"phase": "deactivating"
+					},
+					{
+						"phase": "deactivated"
+					}
+				]
+			},
+			"apply": {
+				"model": "nether-reactor-revisited:block/reactor_core/deactivated"
+			}
 		}
-	}
+	]
 }

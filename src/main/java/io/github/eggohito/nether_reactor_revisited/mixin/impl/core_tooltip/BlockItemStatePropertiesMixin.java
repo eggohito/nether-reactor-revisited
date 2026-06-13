@@ -1,7 +1,7 @@
 package io.github.eggohito.nether_reactor_revisited.mixin.impl.core_tooltip;
 
 import io.github.eggohito.nether_reactor_revisited.block.ReactorCoreBlock;
-import io.github.eggohito.nether_reactor_revisited.reactor.core.CoreState;
+import io.github.eggohito.nether_reactor_revisited.reactor.ReactorPhase;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.component.DataComponentGetter;
 import net.minecraft.network.chat.Component;
@@ -28,10 +28,10 @@ public abstract class BlockItemStatePropertiesMixin {
 	@Inject(method = "addToTooltip", at = @At("TAIL"))
 	void appendCoreStateTooltip(Item.TooltipContext context, Consumer<Component> consumer, TooltipFlag flag, DataComponentGetter components, CallbackInfo ci) {
 
-		CoreState coreState = this.get(ReactorCoreBlock.STATE);
+		ReactorPhase reactorPhase = this.get(ReactorCoreBlock.PHASE);
 
-		if (coreState != null) {
-			consumer.accept(Component.translatable("nether-reactor-revisited.reactor_core.state.tooltip", coreState.getTooltipComponent().copy().withStyle(ChatFormatting.BOLD)).withStyle(ChatFormatting.GRAY));
+		if (reactorPhase != null) {
+			consumer.accept(Component.translatable("item.nether-reactor-revisited.reactor_core.phase.tooltip", reactorPhase.getTooltipComponent().copy().withStyle(ChatFormatting.BOLD)).withStyle(ChatFormatting.GRAY));
 		}
 
 	}
