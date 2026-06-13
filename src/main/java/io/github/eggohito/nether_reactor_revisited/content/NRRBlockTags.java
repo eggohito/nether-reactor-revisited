@@ -7,6 +7,7 @@ import net.minecraft.world.level.block.Block;
 
 public final class NRRBlockTags {
 
+	public static final TagKey<Block> SPIRE_CANNOT_REPLACE = create("spire_cannot_replace");
 	public static final TagKey<Block> ACTIVATED_REACTOR_BLOCKS = create("reactor/activated");
 	public static final TagKey<Block> ACTIVATING_REACTOR_BLOCKS = create("reactor/activating");
 	public static final TagKey<Block> DEACTIVATED_REACTOR_BLOCKS = create("reactor/deactivated");

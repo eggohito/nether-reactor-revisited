@@ -163,8 +163,8 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 		RandomSource random = level.getRandom();
 		BlockPos centeredPos = this.getBlockPos().offset(-this.structureDimensions().getX() / 2, -2, -this.structureDimensions().getZ() / 2);
 
-		return spireStructure.get().placeInWorld(level, centeredPos, centeredPos, new StructurePlaceSettings(), level.getRandom(), Block.UPDATE_CLIENTS);
 		StructurePlaceSettings placeSettings = new StructurePlaceSettings().clearProcessors()
+			.addProcessor(new ProtectedBlockProcessor(NRRBlockTags.SPIRE_CANNOT_REPLACE))
 			.setRandom(random);
 
 		return spireStructure.get().placeInWorld(level, centeredPos, centeredPos, placeSettings, random, Block.UPDATE_CLIENTS);
@@ -182,6 +182,7 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 
 		StructurePlaceSettings placeSettings = new StructurePlaceSettings().clearProcessors()
 			.addProcessor(new BlockRotProcessor(0.25F))
+			.addProcessor(new ProtectedBlockProcessor(NRRBlockTags.SPIRE_CANNOT_REPLACE))
 			.setRandom(random);
 
 		degenSpireStructure.get().placeInWorld(level, centeredPos, centeredPos, placeSettings, random, Block.UPDATE_CLIENTS);
