@@ -1,6 +1,6 @@
 # Nether Reactor: Revisited
 
-A Fabric mod that re-adds the Nether Reactor from Minecraft: Pocket Edition to modern versions of Minecraft: Java Edition for the Fabric mod loader.
+A Fabric mod that re-adds the Nether Reactor from Minecraft: Pocket Edition to modern versions of Minecraft: Java Edition.
 
 ##  Features
 * You can reactivate a deactivated Nether reactor core by mimicking the structure of activating a normal Nether reactor, but with obsidian instead of cobblestone.
