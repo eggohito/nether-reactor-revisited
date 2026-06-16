@@ -28,8 +28,7 @@ public enum ReactorPhase implements StringRepresentable, ReactorEvents {
 
 	ACTIVATING(
 		"activating",
-		ReactorPatterns.ACTIVATING, ChatFormatting.RED,
-		CHECK_ELAPSED_ACTIVE_SECONDS
+		ReactorPatterns.ACTIVATING, ChatFormatting.RED
 	),
 
 	ACTIVATED_STABLE(

@@ -54,6 +54,9 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 	private static final Identifier LOOT_TABLE_ID = NetherReactorRevisited.id("spire");
 	private static final Identifier STRUCTURE_ID = NetherReactorRevisited.id("spire");
 
+	private final ThreadLocal<StructureTemplate> spireStructure = new ThreadLocal<>();
+	private final ThreadLocal<StructureTemplate> degenSpireStructure = new ThreadLocal<>();
+
 	private final AggroSpawner mobSpawner = new AggroSpawner()
 		.entityId(EntityType.ZOMBIFIED_PIGLIN)
 		.maxNearbyEntities(8)
@@ -65,9 +68,6 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 		.lootTable(LOOT_TABLE_ID)
 		.maxNearbyEntities(64)
 		.spawnRange(8);
-
-	private final ThreadLocal<StructureTemplate> spireStructure = new ThreadLocal<>();
-	private final ThreadLocal<StructureTemplate> degenSpireStructure = new ThreadLocal<>();
 
 	private Vec3i structureDimensions = Vec3i.ZERO;
 	private long lastChangeGameTime = 0L;
@@ -287,7 +287,7 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 			case ACTIVATED_STABLE -> {
 
 				boolean patternFailed = pattern.matches(serverLevel, frontTopLeft, Direction.WEST, Direction.UP) == null;
-				boolean maxTimeReached = elapsedTicks >= serverLevel.getGameRules().get(NRRGameRules.STABLE_CORE_LIFETIME);
+				boolean maxTimeReached = elapsedTicks >= serverLevel.getGameRules().get(NRRGameRules.STABLE_LIFETIME);
 
 				if (patternFailed) {
 					entity.changePhase(ReactorPhase.ACTIVATED_UNSTABLE);
@@ -306,7 +306,7 @@ public class ReactorCoreBlockEntity extends BlockEntity {
 			}
 			case ACTIVATED_UNSTABLE -> {
 
-				if (elapsedTicks >= serverLevel.getGameRules().get(NRRGameRules.UNSTABLE_CORE_LIFETIME)) {
+				if (elapsedTicks >= serverLevel.getGameRules().get(NRRGameRules.UNSTABLE_LIFETIME)) {
 					serverLevel.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
 					serverLevel.explode(null, pos.getX(), pos.getY(), pos.getZ(), 5.0F, Level.ExplosionInteraction.BLOCK);
 				}

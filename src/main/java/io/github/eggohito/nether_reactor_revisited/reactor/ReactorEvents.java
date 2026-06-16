@@ -135,7 +135,7 @@ public interface ReactorEvents {
 			if (level instanceof ServerLevel serverLevel) {
 
 				if (phase == ReactorPhase.ACTIVATED_UNSTABLE) {
-					user.sendOverlayMessage(Component.translatable("event.nether-reactor-revisited.elapsed_active_seconds.unstable", (serverLevel.getGameRules().get(NRRGameRules.UNSTABLE_CORE_LIFETIME) / 20) - elapsedSeconds).withStyle(ChatFormatting.RED));
+					user.sendOverlayMessage(Component.translatable("event.nether-reactor-revisited.elapsed_active_seconds.unstable", (serverLevel.getGameRules().get(NRRGameRules.UNSTABLE_LIFETIME) / 20) - elapsedSeconds).withStyle(ChatFormatting.RED));
 				}
 
 				else {

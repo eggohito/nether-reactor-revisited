@@ -4,7 +4,7 @@ A Fabric mod that re-adds the Nether Reactor from Minecraft: Pocket Edition to m
 
 ##  Features
 * You can reactivate a deactivated Nether reactor core by mimicking the structure of activating a normal Nether reactor, but with obsidian instead of cobblestone.
-* Just like in MCPE, mining an active Nether reactor core will freeze the day/night cycle for several days. This is controlled by the `nether-reactor-revisited:day_cycle_frozen_for` game rule (default value: `3`).
+* Just like in MCPE, mining an active Nether reactor core will freeze the day/night cycle for day(s) defined by the `nether-reactor-revisited:day_cycle_frozen_for` game rule.
 * When activated, a Nether reactor core has two states: "stable" and "unstable". A Nether reactor core will be stable once it finishes activating, and will be unstable and explode after a set amount of time if the reactor structure is destroyed, or immediately if the unstable core itself is destroyed.
-  * You can change the value of the `nether-reactor-revisited:stable_core_lifetime` game rule (default value: `900`) to configure how long a stable Nether reactor will remain active (in ticks).
-  * You can change the value of the `nether-reactor-revisited:unstable_core_lifetime` game rule (default value: `60`) to configure how long an unstable Nether reactor will remain (in ticks) until it explodes.
+  * You can change the value of the `nether-reactor-revisited:stable_lifetime` game rule (default value: `900`) to configure how long a stable Nether reactor will remain active (in ticks).
+  * You can change the value of the `nether-reactor-revisited:unstable_lifetime` game rule (default value: `60`) to configure how long an unstable Nether reactor will remain (in ticks) until it explodes.
